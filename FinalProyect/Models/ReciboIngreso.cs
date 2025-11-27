@@ -9,9 +9,6 @@ public class ReciboIngreso
     public int SolicitanteId { get; set; }
     [Required (ErrorMessage = "This field is required to continue.")]
     public Solicitante? Solicitante { get; set; }
-    public int ProcesoId { get; set; }
-    public Proceso? Proceso { get; set; }
-    [Required (ErrorMessage = "This field is required to continue.")]
     public Documento? Documento { get; set; }
     [Required (ErrorMessage = "This field is required to continue.")]
     public string NumeroRecibo { get; set; } = String.Empty;
