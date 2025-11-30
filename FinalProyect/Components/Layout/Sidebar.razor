@@ -1,0 +1,67 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    <!-- Sidebar - Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
+        <div class="sidebar-brand-icon rotate-n-15">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">Tesorería</div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0" />
+
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/">
+            <i class="fas fa-fw fa-home"></i>
+            <span>Inicio</span>
+        </NavLink>
+    </li>
+
+    <!-- Procesos -->
+    <hr class="sidebar-divider" />
+    <div class="sidebar-heading">Procesos</div>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/enterramiento">
+            <i class="fas fa-cross"></i>
+            Derecho a Enterramiento
+        </NavLink>
+    </li>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/construccion">
+            <i class="fas fa-tools"></i>
+            Derecho a Construcción
+        </NavLink>
+    </li>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/registro-documentacion">
+            <i class="fas fa-file-alt"></i>
+            Registro de Documentación
+        </NavLink>
+    </li>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/certificacion">
+            <i class="fas fa-file-signature"></i>
+            Certificaciones
+        </NavLink>
+    </li>
+
+    <li class="nav-item">
+        <NavLink class="nav-link" href="/arrendamiento">
+            <i class="fas fa-vector-square"></i>
+            Arrendamiento de Terreno en el Cementerio
+        </NavLink>
+    </li>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider d-none d-md-block" />
+
+</ul>
+

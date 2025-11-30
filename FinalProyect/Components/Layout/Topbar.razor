@@ -1,0 +1,54 @@
+﻿@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Identity
+@using FinalProyect.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+@code {
+    private string? UserName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        if (user.Identity!.IsAuthenticated)
+        {
+            UserName = user.Identity.Name;
+        }
+    }
+
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Nav.NavigateTo("/Account/Login", true);
+    }
+}
+
+<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+    <!-- Sidebar Toggle -->
+    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+        <i class="fa fa-bars"></i>
+    </button>
+
+    <ul class="navbar-nav ml-auto">
+
+        <li class="nav-item dropdown no-arrow">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">@UserName</span>
+                <i class="fas fa-user-circle fa-2x"></i>
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                <button class="dropdown-item" @onclick="Logout">
+                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Cerrar sesión
+                </button>
+            </div>
+        </li>
+
+    </ul>
+
+</nav>
