@@ -4,6 +4,7 @@ using FinalProyect.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinalProyect.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251129062423_Initicial")]
+    partial class Initicial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,9 +51,6 @@ namespace FinalProyect.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("SolicitanteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
                         .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
@@ -178,8 +178,8 @@ namespace FinalProyect.Migrations
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("MetrosCuadrados")
-                        .HasColumnType("int");
+                    b.Property<decimal>("MetrosCuadrados")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("NotificarVencimiento")
                         .HasColumnType("bit");
@@ -189,13 +189,6 @@ namespace FinalProyect.Migrations
 
                     b.Property<int>("SolicitanteId")
                         .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Ubicacion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -265,9 +258,6 @@ namespace FinalProyect.Migrations
                     b.Property<TimeSpan>("Hora")
                         .HasColumnType("time");
 
-                    b.Property<decimal>("Monto")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ReciboIngresoId")
                         .HasColumnType("int");
 
@@ -275,9 +265,6 @@ namespace FinalProyect.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SolicitanteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
                         .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
@@ -393,9 +380,6 @@ namespace FinalProyect.Migrations
                     b.Property<string>("TipoCertificacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -542,9 +526,6 @@ namespace FinalProyect.Migrations
                     b.Property<string>("TipoDocumentacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -839,7 +820,7 @@ namespace FinalProyect.Migrations
             modelBuilder.Entity("FinalProyect.Models.Documento", b =>
                 {
                     b.HasOne("FinalProyect.Models.DerechoConstruccion", "DerechoConstruccion")
-                        .WithMany("Documentos")
+                        .WithMany()
                         .HasForeignKey("DerechoConstruccionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -1064,11 +1045,6 @@ namespace FinalProyect.Migrations
             modelBuilder.Entity("FinalProyect.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Historiales");
-                });
-
-            modelBuilder.Entity("FinalProyect.Models.DerechoConstruccion", b =>
-                {
-                    b.Navigation("Documentos");
                 });
 
             modelBuilder.Entity("FinalProyect.Models.ReciboIngreso", b =>

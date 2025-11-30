@@ -4,6 +4,7 @@ using FinalProyect.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinalProyect.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251128235428_IniticialCreate")]
+    partial class IniticialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,52 +24,6 @@ namespace FinalProyect.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("DerechoEnterramiento", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CedulaFallecido")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Fecha")
-                        .HasColumnType("datetime2");
-
-                    b.Property<TimeSpan>("Hora")
-                        .HasColumnType("time");
-
-                    b.Property<string>("NombreFallecido")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ReciboIngresoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SolicitanteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReciboIngresoId");
-
-                    b.HasIndex("SolicitanteId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("DerechoEnterramiento");
-                });
 
             modelBuilder.Entity("FinalProyect.Data.ApplicationUser", b =>
                 {
@@ -178,8 +135,8 @@ namespace FinalProyect.Migrations
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("MetrosCuadrados")
-                        .HasColumnType("int");
+                    b.Property<decimal>("MetrosCuadrados")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("NotificarVencimiento")
                         .HasColumnType("bit");
@@ -189,13 +146,6 @@ namespace FinalProyect.Migrations
 
                     b.Property<int>("SolicitanteId")
                         .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Ubicacion")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -265,9 +215,6 @@ namespace FinalProyect.Migrations
                     b.Property<TimeSpan>("Hora")
                         .HasColumnType("time");
 
-                    b.Property<decimal>("Monto")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<int>("ReciboIngresoId")
                         .HasColumnType("int");
 
@@ -275,9 +222,6 @@ namespace FinalProyect.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SolicitanteId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TipoProceso")
                         .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
@@ -293,6 +237,51 @@ namespace FinalProyect.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("DerechoConstruccion");
+                });
+
+            modelBuilder.Entity("FinalProyect.Models.DerechoEnterramiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CedulaFallecido")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<TimeSpan>("Hora")
+                        .HasColumnType("time");
+
+                    b.Property<string>("NombreFallecido")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("ReciboIngresoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SolicitanteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReciboIngresoId");
+
+                    b.HasIndex("SolicitanteId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("DerechoEnterramiento");
                 });
 
             modelBuilder.Entity("FinalProyect.Models.Documento", b =>
@@ -331,8 +320,10 @@ namespace FinalProyect.Migrations
                     b.Property<int?>("RegistroDocumentacionId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TipoDocumento")
-                        .HasColumnType("int");
+                    b.Property<string>("TipoDocumento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
 
@@ -393,9 +384,6 @@ namespace FinalProyect.Migrations
                     b.Property<string>("TipoCertificacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -542,9 +530,6 @@ namespace FinalProyect.Migrations
                     b.Property<string>("TipoDocumentacion")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TipoProceso")
-                        .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
@@ -745,32 +730,6 @@ namespace FinalProyect.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("DerechoEnterramiento", b =>
-                {
-                    b.HasOne("FinalProyect.Models.ReciboIngreso", "ReciboIngreso")
-                        .WithMany()
-                        .HasForeignKey("ReciboIngresoId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("FinalProyect.Models.Solicitante", "Solicitante")
-                        .WithMany()
-                        .HasForeignKey("SolicitanteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("FinalProyect.Data.ApplicationUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ReciboIngreso");
-
-                    b.Navigation("Solicitante");
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("FinalProyect.Models.ArrendamientoTerreno", b =>
                 {
                     b.HasOne("FinalProyect.Models.ReciboIngreso", "ReciboIngreso")
@@ -836,14 +795,40 @@ namespace FinalProyect.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("FinalProyect.Models.DerechoEnterramiento", b =>
+                {
+                    b.HasOne("FinalProyect.Models.ReciboIngreso", "ReciboIngreso")
+                        .WithMany()
+                        .HasForeignKey("ReciboIngresoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FinalProyect.Models.Solicitante", "Solicitante")
+                        .WithMany()
+                        .HasForeignKey("SolicitanteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FinalProyect.Data.ApplicationUser", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReciboIngreso");
+
+                    b.Navigation("Solicitante");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("FinalProyect.Models.Documento", b =>
                 {
                     b.HasOne("FinalProyect.Models.DerechoConstruccion", "DerechoConstruccion")
-                        .WithMany("Documentos")
+                        .WithMany()
                         .HasForeignKey("DerechoConstruccionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DerechoEnterramiento", "DerechoEnterramiento")
+                    b.HasOne("FinalProyect.Models.DerechoEnterramiento", "DerechoEnterramiento")
                         .WithMany("Documentos")
                         .HasForeignKey("DerechoEnterramientoId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -1056,17 +1041,12 @@ namespace FinalProyect.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("DerechoEnterramiento", b =>
-                {
-                    b.Navigation("Documentos");
-                });
-
             modelBuilder.Entity("FinalProyect.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Historiales");
                 });
 
-            modelBuilder.Entity("FinalProyect.Models.DerechoConstruccion", b =>
+            modelBuilder.Entity("FinalProyect.Models.DerechoEnterramiento", b =>
                 {
                     b.Navigation("Documentos");
                 });
