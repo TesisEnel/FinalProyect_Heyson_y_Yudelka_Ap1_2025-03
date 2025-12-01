@@ -1,0 +1,133 @@
+﻿@page "/historial"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@inject ReciboIngresoService ReciboService
+@inject IJSRuntime JS
+
+<div class="h4 mb-4 text-gray-800">Consulta de Historial de Ingresos</div>
+
+<div class="card shadow mb-4">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="m-0 fw-bold text-primary">Historial de Ingresos</div>
+
+        <div class="d-flex gap-2 align-items-center">
+
+            <InputDate @bind-Value="FechaDesde" class="form-control" style="width:150px;" />
+
+            <InputDate @bind-Value="FechaHasta" class="form-control" style="width:150px;" />
+
+            <InputSelect class="form-control" style="width:150px;" @bind-Value="MesSeleccionado">
+                <option value="">Mes...</option>
+                @foreach (var m in Meses)
+                {
+                    <option value="@m">@m</option>
+                }
+            </InputSelect>
+
+            <input class="form-control" style="width:200px;"
+                   placeholder="Descripción..."
+                   @bind="FiltroDescripcion"
+                   @bind:event="oninput" />
+
+            <button class="btn btn-danger" @onclick="ExportarPDF">
+                <i class="fas fa-file-pdf"></i>
+            </button>
+
+            <button class="btn btn-success" @onclick="ExportarExcel">
+                <i class="fas fa-file-excel"></i>
+            </button>
+
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+
+        @if (Lista == null)
+        {
+            <div class="p-3">Cargando...</div>
+        }
+        else if (!ListaFiltrada.Any())
+        {
+            <div class="p-3">No hay resultados.</div>
+        }
+        else
+        {
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Mes</th>
+                        <th>Descripción</th>
+                        <th class="text-end">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ListaFiltrada)
+                    {
+                        <tr>
+                            <td>@item.FechaEmision.ToString("dd/MM/yyyy")</td>
+                            <td>@item.FechaEmision.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"))</td>
+                            <td>@item.Concepto</td>
+                            <td class="text-end">RD$ @item.Monto.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold table-secondary">
+                        <td colspan="3" class="text-end">TOTAL</td>
+                        <td class="text-end">RD$ @TotalFiltrado.ToString("N2")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<ReciboIngreso>? Lista;
+
+    private DateTime? FechaDesde { get; set; }
+    private DateTime? FechaHasta { get; set; }
+    private string MesSeleccionado { get; set; } = "";
+    private string FiltroDescripcion { get; set; } = "";
+
+    private List<string> Meses = System.Globalization.CultureInfo
+        .GetCultureInfo("es-ES").DateTimeFormat.MonthNames
+        .Where(m => !string.IsNullOrWhiteSpace(m))
+        .Select(m => char.ToUpper(m[0]) + m.Substring(1))
+        .ToList();
+
+    private IEnumerable<ReciboIngreso> ListaFiltrada =>
+        Lista!
+            .Where(r =>
+                (FechaDesde == null || r.FechaEmision.Date >= FechaDesde.Value.Date) &&
+                (FechaHasta == null || r.FechaEmision.Date <= FechaHasta.Value.Date) &&
+                (string.IsNullOrWhiteSpace(MesSeleccionado) ||
+                 r.FechaEmision.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"))
+                 .Equals(MesSeleccionado, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(FiltroDescripcion) ||
+                 r.Concepto.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))
+            );
+
+    private decimal TotalFiltrado =>
+        ListaFiltrada.Sum(r => r.Monto);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lista = await ReciboService.ObtenerTodos();
+    }
+
+    private async Task ExportarPDF()
+    {
+        await JS.InvokeVoidAsync("historialExport.exportPDF");
+    }
+
+    private async Task ExportarExcel()
+    {
+        await JS.InvokeVoidAsync("historialExport.exportExcel");
+    }
+}
