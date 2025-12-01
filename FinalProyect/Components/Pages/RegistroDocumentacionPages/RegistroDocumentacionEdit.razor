@@ -1,0 +1,222 @@
+﻿@page "/registrodocumentacion/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject RegistroDocumentacionService RegistroService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject BlobStorageService BlobService
+@inject NavigationManager Nav
+
+<div class="text-primary fw-bold mb-3">Editar Registro de Documentación</div>
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger">@Error</div>
+}
+
+@if (Modelo == null)
+{
+    <div>Cargando...</div>
+}
+else
+{
+    <div class="card shadow p-4">
+
+        <EditForm FormName="EditRegistroDocForm" Model="@Modelo" OnValidSubmit="Guardar">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="text-primary mb-3">Datos del Solicitante</div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre completo *</label>
+                <InputText class="form-control" @bind-Value="Modelo.NombreCompleto" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cédula *</label>
+                <InputText class="form-control" @bind-Value="Modelo.Cedula" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <InputText class="form-control" @bind-Value="Modelo.Telefono" />
+            </div>
+
+            <hr />
+
+            <div class="text-primary mb-3">Tipo de Documentación</div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tipo *</label>
+
+                <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
+                    <option value="">Seleccione un tipo de documentación</option>
+                    <option value="Actos de partición">Actos de partición</option>
+                    <option value="Facturas comerciales">Facturas comerciales</option>
+                    <option value="Actos de nulidad">Actos de nulidad</option>
+                    <option value="Pagaré notario">Pagaré notario</option>
+                    <option value="Actos de notoriedad">Actos de notoriedad</option>
+                </InputSelect>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Monto a pagar (RD$)</label>
+                <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Comentarios u observaciones</label>
+                <InputTextArea class="form-control" @bind-Value="Modelo.Comentarios" />
+            </div>
+
+            <hr />
+
+            <div class="text-primary mb-3">Recibo del Colegio de Notarios</div>
+
+            @if (!string.IsNullOrWhiteSpace(Modelo.ReciboNotariosRuta))
+            {
+                <div class="mb-2">
+                    <strong>Archivo actual:</strong><br />
+                    <a href="@Modelo.ReciboNotariosRuta" target="_blank">
+                        @System.IO.Path.GetFileName(Modelo.ReciboNotariosRuta)
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="text-muted">No hay archivo subido.</div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Subir nuevo (opcional)</label>
+                <InputFile OnChange="OnReciboNuevo" class="form-control" />
+            </div>
+
+            <hr />
+
+            <!-- BOTONES -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar cambios
+                </button>
+
+                <button class="btn btn-secondary" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+
+                <button class="btn btn-danger ms-auto" @onclick="ConfirmarDelete">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
+}
+
+<!-- ==============
+     MODAL DELETE
+================= -->
+@if (ShowDeleteModal)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1" style="display:block;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar Registro</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarDelete"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p>¿Seguro que desea eliminar este registro?</p>
+                    <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelarDelete">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="EliminarRegistro">Eliminar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private RegistroDocumentacion? Modelo;
+
+    private IBrowserFile? ArchivoNuevo;
+    private string? Error;
+
+    private bool ShowDeleteModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await RegistroService.ObtenerPorId(Id);
+
+        if (Modelo == null)
+            Error = "No se encontró el registro.";
+    }
+
+    private void OnReciboNuevo(InputFileChangeEventArgs e)
+    {
+        ArchivoNuevo = e.File;
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            // Actualizar solicitante base
+            await SolicitanteService.Actualizar(Modelo.Solicitante!);
+
+            // Si hay archivo nuevo subirlo
+            if (ArchivoNuevo != null)
+            {
+                using var st = ArchivoNuevo.OpenReadStream(long.MaxValue);
+
+                var url = await BlobService.UploadFileAsync(st, ArchivoNuevo.Name);
+
+                Modelo.ReciboNotariosRuta = url;
+            }
+
+            await RegistroService.Actualizar(Modelo);
+            Nav.NavigateTo("/registrodocumentacion");
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error al guardar: {ex.Message}";
+        }
+    }
+
+    private void ConfirmarDelete()
+    {
+        ShowDeleteModal = true;
+    }
+
+    private void CancelarDelete()
+    {
+        ShowDeleteModal = false;
+    }
+
+    private async Task EliminarRegistro()
+    {
+        await RegistroService.Eliminar(Id);
+        Nav.NavigateTo("/registrodocumentacion");
+    }
+
+    private void Volver() => Nav.NavigateTo("/registrodocumentacion");
+}

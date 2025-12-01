@@ -1,0 +1,106 @@
+﻿@page "/registrodocumentacion/details/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+
+@inject RegistroDocumentacionService RegistroService
+@inject NavigationManager Nav
+
+<div class="text-primary fw-bold mb-4">Detalle del Registro de Documentación</div>
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger">@Error</div>
+}
+
+@if (Modelo == null)
+{
+    <div>Cargando...</div>
+}
+else
+{
+    <div class="card shadow p-4">
+
+        <div class="text-primary mb-3">Datos del Solicitante</div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Nombre:</strong> @Modelo.NombreCompleto</p>
+                <p><strong>Cédula:</strong> @Modelo.Cedula</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Teléfono:</strong> @Modelo.Telefono</p>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="text-primary mb-3">Detalles del Registro</div>
+
+        <p><strong>Tipo de Documentación:</strong> @Modelo.TipoDocumentacion</p>
+        <p><strong>Monto:</strong> RD$ @Modelo.Monto.ToString("N2")</p>
+        <p><strong>Comentarios:</strong> @(string.IsNullOrWhiteSpace(Modelo.Comentarios) ? "—" : Modelo.Comentarios)</p>
+        <p><strong>Fecha del Registro:</strong> @Modelo.FechaRegistro.ToString("dd/MM/yyyy")</p>
+
+        <hr />
+
+        <div class="text-primary mb-3">Recibo del Colegio de Notarios</div>
+
+        @if (!string.IsNullOrWhiteSpace(Modelo.ReciboNotariosRuta))
+        {
+            <a href="@Modelo.ReciboNotariosRuta" target="_blank" class="btn btn-outline-info">
+                <i class="fas fa-file"></i> Ver documento
+            </a>
+        }
+        else
+        {
+            <p class="text-muted">No hay documento subido.</p>
+        }
+
+        <hr />
+
+        <div class="d-flex gap-2 mt-3">
+
+            <button class="btn btn-secondary" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+
+            <button class="btn btn-warning" @onclick="@(() => Editar(Modelo.Id))">
+                <i class="fas fa-edit"></i> Editar
+            </button>
+
+            <button class="btn btn-success" @onclick="@(() => GenerarRecibo(Modelo.Id))">
+                <i class="fas fa-receipt"></i> Recibo
+            </button>
+
+        </div>
+
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private RegistroDocumentacion? Modelo;
+    private string? Error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await RegistroService.ObtenerPorId(Id);
+
+        if (Modelo == null)
+        {
+            Error = "No se encontró el registro solicitado.";
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/registrodocumentacion");
+
+    private void Editar(int id)
+        => Nav.NavigateTo($"/registrodocumentacion/edit/{id}");
+
+    private void GenerarRecibo(int id)
+        => Nav.NavigateTo($"/recibo/create/{id}?proceso=registrodocumentacion");
+}

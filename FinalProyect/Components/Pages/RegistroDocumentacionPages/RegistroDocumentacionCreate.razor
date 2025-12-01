@@ -1,0 +1,146 @@
+﻿@page "/registrodocumentacion/create"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject RegistroDocumentacionService RegistroService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject BlobStorageService BlobService
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="text-primary fw-bold mb-3">Registro de Documentación</div>
+
+<div class="card shadow p-4">
+
+    <EditForm FormName="RegistroDocForm" Model="@Modelo" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="text-primary mb-3">Datos del Solicitante</div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre completo *</label>
+            <InputText class="form-control" @bind-Value="Modelo.NombreCompleto" />
+            <ValidationMessage For="@(() => Modelo.NombreCompleto)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Cédula *</label>
+            <InputText class="form-control" @bind-Value="Modelo.Cedula" />
+            <ValidationMessage For="@(() => Modelo.Cedula)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Teléfono</label>
+            <InputText class="form-control" @bind-Value="Modelo.Telefono" />
+        </div>
+
+        <hr />
+
+        <div class="text-primary mb-3">Tipo de Documentación</div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Tipo *</label>
+
+            <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
+                <option value="">Seleccione un tipo de documentación</option>
+                <option value="Actos de partición">Actos de partición</option>
+                <option value="Facturas comerciales">Facturas comerciales</option>
+                <option value="Actos de nulidad">Actos de nulidad</option>
+                <option value="Pagaré notario">Pagaré notario</option>
+                <option value="Actos de notoriedad">Actos de notoriedad</option>
+            </InputSelect>
+
+            <ValidationMessage For="@(() => Modelo.TipoDocumentacion)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a pagar (RD$) *</label>
+            <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
+            <ValidationMessage For="@(() => Modelo.Monto)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Comentarios u Observaciones</label>
+            <InputTextArea class="form-control" @bind-Value="Modelo.Comentarios" />
+        </div>
+
+        <hr />
+
+        <div class="text-primary mb-3">Recibo del Colegio de Notarios *</div>
+
+        <div class="mb-3">
+            <InputFile class="form-control" OnChange="OnReciboSelected" />
+            <ValidationMessage For="@(() => ReciboNotariosFile)" />
+        </div>
+
+        <hr />
+
+        <button class="btn btn-success">
+            <i class="fas fa-save"></i> Guardar y generar recibo
+        </button>
+
+    </EditForm>
+
+</div>
+
+@code {
+
+    private RegistroDocumentacion Modelo { get; set; } = new();
+
+    private IBrowserFile? ReciboNotariosFile;
+
+    private void OnReciboSelected(InputFileChangeEventArgs e)
+    {
+        ReciboNotariosFile = e.File;
+    }
+
+    private async Task<string> GetUserId()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        return auth.User.Identity?.IsAuthenticated == true
+            ? UserManager.GetUserId(auth.User)
+            : "";
+    }
+
+    private async Task Guardar()
+    {
+        Modelo.UsuarioId = await GetUserId();
+        Modelo.FechaRegistro = DateTime.Now;
+
+        // Crear solicitante si no existe
+        var solicitante = new Solicitante
+        {
+            NombreCompleto = Modelo.NombreCompleto,
+            Cedula = Modelo.Cedula,
+            Telefono = Modelo.Telefono
+        };
+
+        await SolicitanteService.Crear(solicitante);
+        Modelo.SolicitanteId = solicitante.Id;
+
+        // Guardar Registro
+        await RegistroService.Crear(Modelo);
+
+        // Guardar recibo de notarios
+        if (ReciboNotariosFile != null)
+        {
+            using var st = ReciboNotariosFile.OpenReadStream(long.MaxValue);
+
+            var url = await BlobService.UploadFileAsync(st, ReciboNotariosFile.Name);
+
+            Modelo.ReciboNotariosRuta = url;
+            await RegistroService.Actualizar(Modelo);
+        }
+
+        Nav.NavigateTo($"/recibo/create/{Modelo.Id}?proceso=registrodocumentacion");
+    }
+}
+
