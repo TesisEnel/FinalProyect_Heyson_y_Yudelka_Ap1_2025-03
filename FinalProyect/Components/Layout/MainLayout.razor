@@ -17,4 +17,38 @@
 
     </div>
 </div>
+<script src="scripts/print.js"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+    window.historialExport = {
+
+        exportPDF: function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("Historial de Ingresos", 14, 10);
+
+            const table = document.querySelector("table");
+
+            doc.autoTable({
+                html: table,
+                theme: 'grid',
+                startY: 20,
+            });
+
+            doc.save("Historial_Ingresos.pdf");
+        },
+
+        exportExcel: function () {
+            const table = document.querySelector("table");
+            const wb = XLSX.utils.table_to_book(table);
+            XLSX.writeFile(wb, "Historial_Ingresos.xlsx");
+        }
+
+    };
+</script>
