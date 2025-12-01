@@ -16,11 +16,4 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Pages\ExpedicionCertificacionPages\" />
-    <Folder Include="Components\Pages\ConsultaIngresoPages\" />
-    <Folder Include="Components\Pages\HistorialPages\" />
-    <Folder Include="Components\Pages\RegistroDocumentacionPages\" />
-  </ItemGroup>
-
 </Project>
