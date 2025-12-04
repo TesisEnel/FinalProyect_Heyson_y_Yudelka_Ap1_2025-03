@@ -87,6 +87,6 @@
     private void CrearNuevo() => Nav.NavigateTo("/construccion/create");
     private void Ver(int id) => Nav.NavigateTo($"/construccion/details/{id}");
     private void Editar(int id) => Nav.NavigateTo($"/construccion/edit/{id}");
-    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}?proceso=construccion");
+    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/{ProcessType.DerechoConstruccion}");
 }
 

@@ -30,7 +30,9 @@ public class SolicitanteService
 
     public async Task<bool> Crear(Solicitante solicitante)
     {
-        if (await BuscarPorCedula(solicitante.Cedula) != null)
+        var existente = await BuscarPorCedula(solicitante.Cedula);
+
+        if (existente != null)
             return false;
 
         _context.Solicitantes.Add(solicitante);
@@ -49,5 +51,19 @@ public class SolicitanteService
         if (solicitante == null) return false;
         _context.Solicitantes.Remove(solicitante);
         return await _context.SaveChangesAsync() > 0;
+    }
+
+    public async Task<int> ObtenerIdOcrear(Solicitante data)
+    {
+        var existente = await BuscarPorCedula(data.Cedula);
+        if (existente != null)
+            return existente.Id;
+
+        bool creado = await Crear(data);
+
+        if (!creado)
+            throw new Exception("No se pudo crear el solicitante.");
+
+        return data.Id;
     }
 }

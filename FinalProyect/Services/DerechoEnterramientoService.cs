@@ -28,6 +28,8 @@ public class DerechoEnterramientoService
             .Include(d => d.Usuario)
             .Include(d => d.Solicitante)
             .Include(d => d.Documentos)
+            .Include(d => d.ReciboIngreso)
+            .ThenInclude(r => r.Documentos)
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 
@@ -50,5 +52,10 @@ public class DerechoEnterramientoService
         if (derecho == null) return false;
         _context.DerechoEnterramiento.Remove(derecho);
         return await _context.SaveChangesAsync() > 0;
+    }
+
+    public async Task<bool> Existe(int id)
+    {
+        return await _context.DerechoEnterramiento.AnyAsync(d => d.Id == id);
     }
 }

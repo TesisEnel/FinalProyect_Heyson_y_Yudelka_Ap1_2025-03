@@ -7,7 +7,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.Components.Forms
 
-@inject ArrendamientoTerrenoService ArrService
+@inject ArrendamientoTerrenoService ArrendamientoService
 @inject SolicitanteService SolicitanteService
 @inject ReciboIngresoService ReciboService
 @inject NavigationManager Nav
@@ -17,6 +17,11 @@
 <div class="mb-4 text-primary fw-bold">
     Registrar Arrendamiento de terreno en el cementerio
 </div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
 
 <div class="card shadow-sm p-4">
     <EditForm FormName="ArrForm" Model="@Modelo" OnValidSubmit="Guardar">
@@ -103,6 +108,8 @@
 
     private string MontoTexto { get; set; } = "RD$ 0.00";
 
+    private string ErrorMessage = "";
+
     private void CalcularMonto(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int metros))
@@ -123,18 +130,18 @@
 
     private async Task Guardar()
     {
-        Modelo.UsuarioId = await GetUserId();
+        try
+        {
+            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
 
-        // Crear Solicitante si no existe
-        if (SolicitanteProceso.Id == 0)
-            await SolicitanteService.Crear(SolicitanteProceso);
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(SolicitanteProceso);
 
-        Modelo.SolicitanteId = SolicitanteProceso.Id;
+            int arrendamientoId = await ArrendamientoService.Crear(Modelo);
 
-        // Calcular monto final para el recibo
-        var monto = ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados);
+            // Calcular monto final para el recibo
+            var monto = ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados);
 
-        var recibo = new ReciboIngreso
+            var recibo = new ReciboIngreso
         {
             Concepto = Modelo.GetConcepto(),
             Monto = monto,
@@ -144,11 +151,19 @@
             NumeroRecibo = new Random().Next(1000, 9999).ToString()
         };
 
-        int reciboId = await ReciboService.Crear(recibo);
-        Modelo.ReciboIngresoId = reciboId;
+            int reciboId = await ReciboService.Crear(recibo);
 
-        await ArrService.Crear(Modelo);
+            Modelo.Id = arrendamientoId;
+            Modelo.ReciboIngresoId = reciboId;
 
-        Nav.NavigateTo($"/recibo/create/{reciboId}?proceso=arrendamiento");
+            await ArrendamientoService.Actualizar(Modelo);
+
+            Nav.NavigateTo($"/recibo/create/{arrendamientoId}/{ProcessType.ArrendamientoTerreno}");
+        } 
+        catch (Exception ex)
+        {
+            ErrorMessage = "Ocurrió un error al guardar el arrendamiento: " + ex.Message;
+            Console.WriteLine(ex);
+        }
     }
 }

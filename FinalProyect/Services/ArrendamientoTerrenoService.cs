@@ -27,13 +27,15 @@ public class ArrendamientoTerrenoService
             .Include(a => a.Usuario)
             .Include(a => a.Solicitante)
             .Include(a => a.ReciboIngreso)
+            .ThenInclude(r => r.Documentos)
             .FirstOrDefaultAsync(a => a.Id == id);
     }
 
-    public async Task<bool> Crear(ArrendamientoTerreno arrendamiento)
+    public async Task<int> Crear(ArrendamientoTerreno arrendamiento)
     {
         _context.ArrendamientoTerreno.Add(arrendamiento);
-        return await _context.SaveChangesAsync() > 0;
+         await _context.SaveChangesAsync();
+         return arrendamiento.Id;
     }
 
     public async Task<bool> Actualizar(ArrendamientoTerreno arrendamiento)

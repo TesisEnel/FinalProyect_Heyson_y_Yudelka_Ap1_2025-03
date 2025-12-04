@@ -28,6 +28,8 @@ public class DerechoConstruccionService
             .Include(d => d.Usuario)
             .Include(d => d.Solicitante)
             .Include(d => d.Documentos)
+            .Include(d => d.ReciboIngreso)
+            .ThenInclude(r => r.Documentos)
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 

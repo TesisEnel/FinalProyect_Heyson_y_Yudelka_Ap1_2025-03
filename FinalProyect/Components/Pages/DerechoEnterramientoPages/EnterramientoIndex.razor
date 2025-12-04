@@ -61,7 +61,7 @@
                                     <td>@item.NombreFallecido</td>
                                     <td>@item.CedulaFallecido</td>
                                     <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
-                                    <td>@item.Hora.ToString(@"hh\:mm")</td>
+                                    <td>@DateTime.Today.Add(item.Hora).ToString("hh:mm tt")</td>
 
                                     <td class="text-center">
                                         <div class="btn-group">
@@ -112,5 +112,5 @@
     private void CrearNuevo() => Nav.NavigateTo("/enterramiento/create");
     private void Ver(int id) => Nav.NavigateTo($"/enterramiento/details/{id}");
     private void Editar(int id) => Nav.NavigateTo($"/enterramiento/edit/{id}");
-    private void Recibo(int id) => Nav.NavigateTo($"/recibo/create/{id}?proceso=enterramiento");
+    private void Recibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/DerechoEnterramiento");
 }

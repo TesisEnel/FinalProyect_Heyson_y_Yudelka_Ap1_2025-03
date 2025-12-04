@@ -10,11 +10,17 @@
 @inject DerechoConstruccionService ConstruccionService
 @inject SolicitanteService SolicitanteService
 @inject DocumentoService DocumentoService
+@inject ReciboIngresoService ReciboService
 @inject NavigationManager Nav
 @inject UserManager<ApplicationUser> UserManager
 @inject AuthenticationStateProvider AuthProvider
 
 <h3 class="mb-4 text-primary fw-bold">Registrar Derecho a Construcción</h3>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
 
 <div class="card shadow p-4">
 
@@ -43,13 +49,13 @@
 
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold">Fecha *</label>
+                <label class="form-label fw-semibold">Fecha</label>
                 <InputDate class="form-control" @bind-Value="Modelo.Fecha" />
             </div>
 
             <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold">Hora *</label>
-                <InputText class="form-control" @bind-Value="HoraTexto" placeholder="HH:mm" />
+                <label class="form-label fw-semibold">Hora</label>
+                <input class="form-control" @bind="HoraTexto" readonly />
             </div>
         </div>
 
@@ -75,7 +81,14 @@
     private Solicitante SolicitanteProceso { get; set; } = new();
 
     private IBrowserFile? ReciboInspectorFile;
-    private string HoraTexto = "";
+    string HoraTexto { get; set; } = DateTime.Now.ToString("hh:mm tt");
+    string ErrorMessage = "";
+
+    protected override void OnInitialized()
+    {
+        Modelo.Fecha = DateTime.Today;
+        Modelo.Hora = DateTime.Now.TimeOfDay;
+    }
 
     private void OnReciboInspectorSelected(InputFileChangeEventArgs e)
         => ReciboInspectorFile = e.File;
@@ -90,35 +103,50 @@
 
     private async Task Guardar()
     {
-        // Usuario que registró el proceso
-        Modelo.UsuarioId = await GetUserId();
-
-        // Crear o usar solicitante
-        if (SolicitanteProceso.Id == 0)
-            await SolicitanteService.Crear(SolicitanteProceso);
-
-        Modelo.SolicitanteId = SolicitanteProceso.Id;
-
-        // Hora
-        if (!string.IsNullOrWhiteSpace(HoraTexto))
-            Modelo.Hora = TimeSpan.Parse(HoraTexto);
-
-
-        Modelo.Monto = ProcessPrices.GetPrice(ProcessType.DerechoConstruccion);
-
-        await ConstruccionService.Crear(Modelo);
-
-        if (ReciboInspectorFile != null)
+        try
         {
-            using var stream = ReciboInspectorFile.OpenReadStream();
-            await DocumentoService.SubirDocumentoAsync(
-                stream,
-                ReciboInspectorFile.Name,
-                DocumentType.ReciboInspector,
-                construccionId: Modelo.Id
-            );
-        }
+            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
 
-        Nav.NavigateTo($"/recibo/create/{Modelo.Id}?proceso=construccion");
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(SolicitanteProceso);
+
+            Modelo.Hora = DateTime.Now.TimeOfDay;
+
+            Modelo.Monto = ProcessPrices.GetPrice(ProcessType.DerechoConstruccion);
+
+            int construccionId = await ConstruccionService.Crear(Modelo);
+
+            if (ReciboInspectorFile != null)
+            {
+                using var stream = ReciboInspectorFile.OpenReadStream();
+                await DocumentoService.SubirDocumentoAsync(
+                    stream,
+                    ReciboInspectorFile.Name,
+                    DocumentType.ReciboInspector,
+                    construccionId: construccionId
+                );
+            }
+
+            var recibo = new ReciboIngreso
+            {
+                Concepto = Modelo.GetConcepto(),
+                Monto = Modelo.Monto,
+                MontoEnLetras = ProcessPrices.GetPriceText((int)Modelo.Monto),
+                SolicitanteId = Modelo.SolicitanteId,
+                FormaPago = "Efectivo",
+                NumeroRecibo = new Random().Next(1000, 9999).ToString()
+            };
+
+            int reciboId = await ReciboService.Crear(recibo);
+
+            Modelo.Id = construccionId;
+            Modelo.ReciboIngresoId = reciboId;
+            await ConstruccionService.Actualizar(Modelo);
+
+            Nav.NavigateTo($"/recibo/create/{construccionId}/{ProcessType.DerechoConstruccion}");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Ocurrió un error al guardar: " + ex.Message;
+        }
     }
 }

@@ -7,7 +7,7 @@ public class ArrendamientoTerreno : ISolicitable
 {
     public int Id { get; set; }
     public ProcessType TipoProceso { get; set; } = ProcessType.ArrendamientoTerreno;
-    [Required]
+
     public string UsuarioId { get; set; } = string.Empty;
     public ApplicationUser Usuario { get; set; }
 
@@ -27,10 +27,9 @@ public class ArrendamientoTerreno : ISolicitable
 
     public bool NotificarVencimiento { get; set; }
 
-    [Required]
-    public int ReciboIngresoId { get; set; }
-    public ReciboIngreso ReciboIngreso { get; set; }
-
+    public int? ReciboIngresoId { get; set; }
+    public ReciboIngreso? ReciboIngreso { get; set; }
+    public ICollection<Documento>? Documentos { get; set; }
     public string GetConcepto() => "Arrendamiento de terreno en el cementerio";
     public int GetMetros() => MetrosCuadrados;
 }

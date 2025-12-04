@@ -43,10 +43,12 @@
                     <tr>
                         <th>ID</th>
                         <th>Solicitante</th>
+                        <th>Teléfono</th>
                         <th>Ubicación</th>
                         <th>Inicio</th>
                         <th>Vence</th>
                         <th>Metros²</th>
+                        <th>Monto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -57,10 +59,14 @@
                         <tr class="@GetRowClass(item)">
                             <td>@item.Id</td>
                             <td>@item.Solicitante?.NombreCompleto</td>
+                            <td>@item.Solicitante?.Telefono</td>
                             <td>@item.Ubicacion</td>
                             <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
                             <td>@item.FechaFin.ToString("dd/MM/yyyy")</td>
                             <td>@item.MetrosCuadrados</td>
+                            <td>
+                                @ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, item.MetrosCuadrados).ToString("N2")
+                            </td>
 
                             <td class="text-center">
                                 <div class="btn-group">
@@ -102,16 +108,16 @@
     private void CrearNuevo() => Nav.NavigateTo("/arrendamiento/create");
     private void Ver(int id) => Nav.NavigateTo($"/arrendamiento/details/{id}");
     private void Editar(int id) => Nav.NavigateTo($"/arrendamiento/edit/{id}");
-    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}?proceso=arrendamiento");
+    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/{ProcessType.ArrendamientoTerreno}");
     private void VerVencimientos() => Nav.NavigateTo("/arrendamiento/vencimientos");
 
     private string GetRowClass(ArrendamientoTerreno item)
     {
         if (item.FechaFin < DateTime.Now)
-            return "table-danger";       // Vencido
+            return "table-danger";     
 
         if ((item.FechaFin - DateTime.Now).TotalDays <= 30)
-            return "table-warning";      // Por vencer
+            return "table-warning";     
 
         return "";
     }

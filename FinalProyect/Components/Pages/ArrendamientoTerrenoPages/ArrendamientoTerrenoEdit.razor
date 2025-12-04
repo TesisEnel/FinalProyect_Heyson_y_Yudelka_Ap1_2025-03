@@ -25,12 +25,12 @@
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Nombre completo</label>
-            <InputText class="form-control" @bind-Value="Modelo.Solicitante.NombreCompleto" disabled />
+            <InputText class="form-control" @bind-Value="Modelo.Solicitante.NombreCompleto"/>
         </div>
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Cédula</label>
-            <InputText class="form-control" @bind-Value="Modelo.Solicitante.Cedula" disabled />
+            <InputText class="form-control" @bind-Value="Modelo.Solicitante.Cedula"/>
         </div>
 
         <hr />
@@ -52,7 +52,14 @@
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Metros cuadrados</label>
-            <InputNumber class="form-control" @bind-Value="Modelo.MetrosCuadrados" />
+            <InputNumber class="form-control" @bind-Value="Modelo.MetrosCuadrados" @oninput="(e => OnMetrosChanged(e))" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a pagar</label>
+            <input class="form-control"
+                   value="RD$ @ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados).ToString("N2")"
+                   readonly />
         </div>
 
         <div class="mb-3">
@@ -83,6 +90,15 @@
     protected override async Task OnInitializedAsync()
     {
         Modelo = await ArrService.ObtenerPorId(Id);
+    }
+
+    private void OnMetrosChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int metros))
+        {
+            Modelo.MetrosCuadrados = metros;
+            StateHasChanged();
+        }
     }
 
     private async Task Guardar()

@@ -184,7 +184,7 @@ namespace FinalProyect.Migrations
                     b.Property<bool>("NotificarVencimiento")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ReciboIngresoId")
+                    b.Property<int?>("ReciboIngresoId")
                         .HasColumnType("int");
 
                     b.Property<int>("SolicitanteId")
@@ -268,7 +268,7 @@ namespace FinalProyect.Migrations
                     b.Property<decimal>("Monto")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ReciboIngresoId")
+                    b.Property<int?>("ReciboIngresoId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReciboInspectorPath")
@@ -303,6 +303,9 @@ namespace FinalProyect.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ArrendamientoTerrenoId")
+                        .HasColumnType("int");
+
                     b.Property<string>("BlobUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -335,6 +338,8 @@ namespace FinalProyect.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ArrendamientoTerrenoId");
 
                     b.HasIndex("DerechoConstruccionId");
 
@@ -578,13 +583,10 @@ namespace FinalProyect.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Sexo")
+                    b.Property<string>("Telefono")
                         .IsRequired()
                         .HasMaxLength(11)
                         .HasColumnType("nvarchar(11)");
-
-                    b.Property<string>("Telefono")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -776,8 +778,7 @@ namespace FinalProyect.Migrations
                     b.HasOne("FinalProyect.Models.ReciboIngreso", "ReciboIngreso")
                         .WithMany()
                         .HasForeignKey("ReciboIngresoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FinalProyect.Models.Solicitante", "Solicitante")
                         .WithMany()
@@ -814,8 +815,7 @@ namespace FinalProyect.Migrations
                     b.HasOne("FinalProyect.Models.ReciboIngreso", "ReciboIngreso")
                         .WithMany()
                         .HasForeignKey("ReciboIngresoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("FinalProyect.Models.Solicitante", "Solicitante")
                         .WithMany()
@@ -838,6 +838,11 @@ namespace FinalProyect.Migrations
 
             modelBuilder.Entity("FinalProyect.Models.Documento", b =>
                 {
+                    b.HasOne("FinalProyect.Models.ArrendamientoTerreno", null)
+                        .WithMany("Documentos")
+                        .HasForeignKey("ArrendamientoTerrenoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FinalProyect.Models.DerechoConstruccion", "DerechoConstruccion")
                         .WithMany("Documentos")
                         .HasForeignKey("DerechoConstruccionId")
@@ -1064,6 +1069,11 @@ namespace FinalProyect.Migrations
             modelBuilder.Entity("FinalProyect.Data.ApplicationUser", b =>
                 {
                     b.Navigation("Historiales");
+                });
+
+            modelBuilder.Entity("FinalProyect.Models.ArrendamientoTerreno", b =>
+                {
+                    b.Navigation("Documentos");
                 });
 
             modelBuilder.Entity("FinalProyect.Models.DerechoConstruccion", b =>

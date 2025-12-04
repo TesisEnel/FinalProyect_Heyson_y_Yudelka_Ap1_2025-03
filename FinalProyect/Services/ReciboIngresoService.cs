@@ -71,4 +71,12 @@ public class ReciboIngresoService
         recibo.Estado = "Anulado";
         return await _context.SaveChangesAsync() > 0;
     }
+
+    public async Task<ReciboIngreso?> ObtenerPorIdConDocumentos(int id)
+    {
+        return await _context.ReciboIngreso
+            .Include(r => r.Documentos)
+            .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
 }

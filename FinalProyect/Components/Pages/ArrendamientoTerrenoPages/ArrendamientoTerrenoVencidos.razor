@@ -2,8 +2,14 @@
 @rendermode InteractiveServer
 
 @inject ArrendamientoTerrenoService ArrService
+@inject NavigationManager Nav
 
 <h3 class="text-danger mb-4">Arrendamientos Vencidos</h3>
+
+<button type="button" class="btn btn-secondary mt-3 ms-2"
+        @onclick="Volver">
+    <i class="fas fa-arrow-right"></i> Volver
+</button>
 
 @if (Lista.Count == 0)
 {
@@ -18,10 +24,12 @@ else
             <tr>
                 <th>ID</th>
                 <th>Solicitante</th>
+                <th>Teléfono</th>
                 <th>Fecha inicio</th>
                 <th>Fecha fin</th>
                 <th>Ubicación</th>
                 <th>Metros</th>
+                <th>Monto</th>
             </tr>
         </thead>
         <tbody>
@@ -30,10 +38,14 @@ else
                 <tr>
                     <td>@item.Id</td>
                     <td>@item.Solicitante.NombreCompleto</td>
+                    <td>@item.Solicitante.Telefono</td>
                     <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
                     <td class="text-danger fw-bold">@item.FechaFin.ToString("dd/MM/yyyy")</td>
                     <td>@item.Ubicacion</td>
                     <td>@item.MetrosCuadrados</td>
+                    <td>
+                        @ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, item.MetrosCuadrados).ToString("N2")
+                    </td>
                 </tr>
             }
         </tbody>
@@ -47,5 +59,10 @@ else
     protected override async Task OnInitializedAsync()
     {
         Lista = await ArrService.ObtenerVencimientos();
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/arrendamiento");
     }
 }
