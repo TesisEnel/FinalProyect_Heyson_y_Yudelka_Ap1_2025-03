@@ -11,7 +11,6 @@ public class Solicitante
     public string Cedula { get; set; }
     [MaxLength(11, ErrorMessage = "The Name must not exceed 11 characters.")]
     [Required(ErrorMessage = "This field is required to continue.")]
-    public string? Sexo { get; set; }
     public string? Telefono { get; set; }
     public ICollection<Historial>? Historiales { get; set; }
     public ICollection<ReciboIngreso>? RecibosIngresos { get; set; }
