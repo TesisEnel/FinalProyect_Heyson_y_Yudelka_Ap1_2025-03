@@ -30,6 +30,19 @@ else
             <DataAnnotationsValidator />
             <ValidationSummary />
 
+            <!-- FECHA Y HORA -->
+            <div class="col-md-4">
+                <strong>Fecha:</strong>
+                <div>@Modelo.Fecha.ToString("dd/MM/yyyy")</div>
+            </div>
+
+            <div class="col-md-4">
+                <strong>Hora:</strong>
+                <div>@Modelo.Hora.ToString(@"hh\:mm")</div>
+            </div>
+
+            <hr />
+
             <!-- DATOS DEL SOLICITANTE -->
             <h5 class="text-primary mb-3">Datos del Solicitante</h5>
 
@@ -50,21 +63,6 @@ else
 
             <hr />
 
-            <!-- FECHA Y HORA -->
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Fecha</label>
-                    <InputDate class="form-control" @bind-Value="Modelo.Fecha" />
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Hora</label>
-                    <InputText class="form-control" @bind-Value="HoraTexto" placeholder="HH:mm" />
-                </div>
-            </div>
-
-            <hr />
-
             <!-- MONTO -->
             <h5 class="text-primary mb-3">Monto</h5>
             <div class="mb-3">
@@ -79,28 +77,42 @@ else
 
             @if (InspectorActual != null)
             {
-                <div class="mb-2">
+                <div class="mb-3">
                     <strong>Documento actual:</strong><br />
-                    <a href="@InspectorActual.BlobUrl" target="_blank">@InspectorActual.NombreArchivo</a>
-                </div>
-            }
-            else if (!string.IsNullOrWhiteSpace(Modelo.ReciboInspectorPath))
-            {
-                <div class="mb-2">
-                    <strong>Documento actual:</strong><br />
-                    <a href="@Modelo.ReciboInspectorPath" target="_blank">Abrir documento</a>
-                </div>
-            }
-            else
-            {
-                <div class="text-muted mb-2">No hay documento subido.</div>
-            }
 
-            <div class="mb-3">
-                <label class="form-label">Subir nuevo (opcional)</label>
-                <InputFile OnChange="OnReciboInspectorSelected" class="form-control" />
-            </div>
+                    @if (InspectorActual.Extension.ToLower() == ".jpg"
+                                || InspectorActual.Extension.ToLower() == ".jpeg"
+                                || InspectorActual.Extension.ToLower() == ".png")
+                    {
+                        <!-- Miniatura -->
+                        <img src="@InspectorActual.BlobUrl"
+                             class="img-thumbnail shadow-sm mb-2"
+                             style="max-width: 180px;" />
 
+                        <br />
+                        <a href="@InspectorActual.BlobUrl" target="_blank" class="btn btn-outline-primary btn-sm">
+                            Ver documento
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@InspectorActual.BlobUrl"
+                           target="_blank">
+                            <i class="fas fa-file-pdf"></i> Abrir documento
+                        </a>
+                    }
+                </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted mb-2">No hay documento subido.</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Subir nuevo (opcional)</label>
+                            <InputFile OnChange="OnReciboInspectorSelected" class="form-control" />
+                        </div>
+                    }
             <hr />
 
             <div class="d-flex gap-2">
@@ -205,6 +217,5 @@ else
             Error = $"Error al guardar: {ex.Message}";
         }
     }
-
     private void Volver() => Nav.NavigateTo("/construccion");
 }
