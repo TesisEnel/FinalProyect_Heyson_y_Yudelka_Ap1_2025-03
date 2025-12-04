@@ -1,4 +1,4 @@
-﻿window.printSection = (elementoId) {
+﻿window.printSection = function (elementoId) {
     const original = document.body.innerHTML;
     const section = document.getElementById(elementoId).innerHTML;
 
@@ -7,7 +7,9 @@
             ${section}
         </div>
     `;
+
     window.print();
+
     document.body.innerHTML = original;
     location.reload();
 };
