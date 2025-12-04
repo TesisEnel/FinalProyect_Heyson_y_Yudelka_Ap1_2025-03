@@ -2,160 +2,233 @@
 @rendermode InteractiveServer
 
 @using FinalProyect.Models
-@using Microsoft.AspNetCore.Identity
-@using FinalProyect.Data
 @using FinalProyect.Services
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Identity
 
 @inject DerechoEnterramientoService EnterramientoService
 @inject SolicitanteService SolicitanteService
 @inject DocumentoService DocumentoService
 @inject NavigationManager Nav
 @inject UserManager<ApplicationUser> UserManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject AuthenticationStateProvider AuthProvider
 
 <h3 class="mb-4 text-primary fw-bold">Registrar Derecho a Enterramiento</h3>
 
 <div class="card shadow-sm p-4 mt-3">
 
-    <EditForm FormName="EnterramientoForm" Model="@Modelo" OnValidSubmit="Guardar">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <h5 class="text-primary mb-3">Datos del Solicitante</h5>
 
-        <!-- DATOS DEL SOLICITANTE -->
-        <h5 class="text-primary mb-3">Datos del Solicitante</h5>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Nombre Completo</label>
+        <input class="form-control" @bind="SolicitanteProceso.NombreCompleto" />
+    </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Cédula</label>
-            <InputText class="form-control" @bind-Value="SolicitanteProceso.Cedula" />
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Cédula</label>
+        <input class="form-control" @bind="SolicitanteProceso.Cedula" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Teléfono</label>
+        <input class="form-control" @bind="SolicitanteProceso.Telefono" />
+    </div>
+
+    <hr />
+
+    <!-- ARCHIVOS -->
+    <h5 class="text-primary mb-3">Cédulas y Acta de Defunción</h5>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Cédula del solicitante *</label>
+        <InputFile OnChange="OnCedulaSolicitanteSelected" class="form-control" />
+        <span class="text-danger">@ErrorCedulaSolicitante</span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Cédula del fallecido *</label>
+        <InputFile OnChange="OnCedulaFallecidoSelected" class="form-control" />
+        <span class="text-danger">@ErrorCedulaFallecido</span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Acta de Defunción *</label>
+        <InputFile OnChange="OnActaDefuncionSelected" class="form-control" />
+        <span class="text-danger">@ErrorActa</span>
+    </div>
+
+    <hr />
+
+    <h5 class="text-primary mb-3">Datos del Fallecido</h5>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Nombre completo del fallecido</label>
+        <input class="form-control" @bind="Modelo.NombreFallecido" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Cédula del fallecido</label>
+        <input class="form-control" @bind="Modelo.CedulaFallecido" />
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Fecha</label>
+            <InputDate class="form-control" @bind-Value="Modelo.Fecha" />
         </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Nombre Completo</label>
-            <InputText class="form-control" @bind-Value="SolicitanteProceso.NombreCompleto" />
+        <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Hora</label>
+            <input class="form-control" @bind="HoraTexto" readonly />
         </div>
+    </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Teléfono</label>
-            <InputText class="form-control" @bind-Value="SolicitanteProceso.Telefono" />
-        </div>
+    <button class="btn btn-success mt-3" @onclick="Guardar">
+        <i class="fas fa-save"></i> Guardar y generar recibo
+    </button>
 
-        <hr />
-
-        <!-- SUBIDA DE DOCUMENTOS -->
-        <h5 class="text-primary mb-3">Documentos del Solicitante</h5>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Cédula del solicitante *</label>
-            <InputFile OnChange="OnCedulaSolicitanteSelected" class="form-control" />
-        </div>
-
-        <hr />
-
-        <!-- DATOS DEL FALLECIDO -->
-        <h5 class="text-primary mb-3">Datos del Fallecido</h5>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Nombre del fallecido</label>
-            <InputText class="form-control" @bind-Value="Modelo.NombreFallecido" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Cédula del fallecido *</label>
-            <InputFile OnChange="OnCedulaFallecidoSelected" class="form-control" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Número de Cédula del fallecido</label>
-            <InputText class="form-control" @bind-Value="Modelo.CedulaFallecido" />
-        </div>
-
-        <!-- ACTA DE DEFUNCIÓN -->
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Acta de defunción o certificación *</label>
-            <InputFile OnChange="OnActaDefuncionSelected" class="form-control" />
-        </div>
-
-        <hr />
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold">Fecha</label>
-                <InputDate class="form-control" @bind-Value="Modelo.Fecha" />
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold">Hora</label>
-                <InputText class="form-control" @bind-Value="HoraTexto" placeholder="HH:mm" />
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-success mt-3">
-            <i class="fas fa-save"></i> Guardar y generar recibo
-        </button>
-
-    </EditForm>
+    <div class="text-danger mt-3 fw-bold">@ErrorGlobal</div>
 
 </div>
 
 @code {
-    private DerechoEnterramiento Modelo { get; set; } = new();
-    private Solicitante SolicitanteProceso { get; set; } = new();
+    DerechoEnterramiento Modelo { get; set; } = new();
+    Solicitante SolicitanteProceso { get; set; } = new();
 
-    private IBrowserFile? CedulaSolicitanteFile;
-    private IBrowserFile? CedulaFallecidoFile;
-    private IBrowserFile? ActaDefuncionFile;
+    IBrowserFile? CedulaSolicitanteFile;
+    IBrowserFile? CedulaFallecidoFile;
+    IBrowserFile? ActaDefuncionFile;
 
-    private string HoraTexto { get; set; } = "";
+    string ErrorCedulaSolicitante = "";
+    string ErrorCedulaFallecido = "";
+    string ErrorActa = "";
+    string ErrorGlobal = "";
 
-    private void OnCedulaSolicitanteSelected(InputFileChangeEventArgs e)
-        => CedulaSolicitanteFile = e.File;
+    string HoraTexto { get; set; } = DateTime.Now.ToString("HH:mm");
 
-    private void OnCedulaFallecidoSelected(InputFileChangeEventArgs e)
-        => CedulaFallecidoFile = e.File;
+    string[] Permitidos = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
 
-    private void OnActaDefuncionSelected(InputFileChangeEventArgs e)
-        => ActaDefuncionFile = e.File;
+    protected override void OnInitialized()
+    {
+        Modelo.Fecha = DateTime.Now.Date;
+    }
+
+    private IBrowserFile? ValidarArchivo(IBrowserFile file, ref string errorOut)
+    {
+        var ext = Path.GetExtension(file.Name).ToLower();
+
+        if (!Permitidos.Contains(ext))
+        {
+            errorOut = "Solo PDF o imágenes (jpg, jpeg, png).";
+            return null;
+        }
+
+        if (file.Size > 10 * 1024 * 1024)
+        {
+            errorOut = "Máximo permitido: 10MB.";
+            return null;
+        }
+
+        return file;
+    }
+
+    void OnCedulaSolicitanteSelected(InputFileChangeEventArgs e)
+    {
+        ErrorCedulaSolicitante = "";
+        CedulaSolicitanteFile = ValidarArchivo(e.File, ref ErrorCedulaSolicitante);
+    }
+
+    void OnCedulaFallecidoSelected(InputFileChangeEventArgs e)
+    {
+        ErrorCedulaFallecido = "";
+        CedulaFallecidoFile = ValidarArchivo(e.File, ref ErrorCedulaFallecido);
+    }
+
+    void OnActaDefuncionSelected(InputFileChangeEventArgs e)
+    {
+        ErrorActa = "";
+        ActaDefuncionFile = ValidarArchivo(e.File, ref ErrorActa);
+    }
 
     private async Task<string> GetUserId()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        return authState.User.Identity?.IsAuthenticated == true
-            ? UserManager.GetUserId(authState.User)
-            : "";
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        return UserManager.GetUserId(auth.User) ?? "";
     }
 
     private async Task Guardar()
     {
-        Modelo.UsuarioId = await GetUserId();
-
-        if (SolicitanteProceso.Id == 0)
-            await SolicitanteService.Crear(SolicitanteProceso);
-
-        Modelo.SolicitanteId = SolicitanteProceso.Id;
-
-        if (!string.IsNullOrWhiteSpace(HoraTexto))
-            Modelo.Hora = TimeSpan.Parse(HoraTexto);
-
-        int id = await EnterramientoService.Crear(Modelo);
-
-        if (CedulaSolicitanteFile != null)
+        try
         {
-            using var st = CedulaSolicitanteFile.OpenReadStream();
-            await DocumentoService.SubirDocumentoAsync(st, CedulaSolicitanteFile.Name, DocumentType.CedulaSolicitante, enterramientoId: id);
-        }
+            ErrorGlobal = "";
 
-        if (CedulaFallecidoFile != null)
+            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
+
+            Modelo.Hora = TimeSpan.ParseExact(HoraTexto, "hh\\:mm", null);
+
+            var existente = await SolicitanteService.BuscarPorCedula(SolicitanteProceso.Cedula);
+
+            if (existente != null)
+            {
+
+                Modelo.SolicitanteId = existente.Id;
+            }
+            else
+            {
+                bool creado = await SolicitanteService.Crear(SolicitanteProceso);
+
+                if (!creado)
+                {
+                    ErrorGlobal = "No se pudo registrar el solicitante.";
+                    return;
+                }
+
+                Modelo.SolicitanteId = SolicitanteProceso.Id;
+            }
+
+            int id = await EnterramientoService.Crear(Modelo);
+
+            if (CedulaSolicitanteFile != null)
+            {
+                using var st = CedulaSolicitanteFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    CedulaSolicitanteFile.Name,
+                    DocumentType.CedulaSolicitante,
+                    enterramientoId: id
+                );
+            }
+
+            if (CedulaFallecidoFile != null)
+            {
+                using var st = CedulaFallecidoFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    CedulaFallecidoFile.Name,
+                    DocumentType.CedulaFallecido,
+                    enterramientoId: id
+                );
+            }
+
+            if (ActaDefuncionFile != null)
+            {
+                using var st = ActaDefuncionFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    ActaDefuncionFile.Name,
+                    DocumentType.ActaDefuncion,
+                    enterramientoId: id
+                );
+            }
+
+            Nav.NavigateTo($"/recibo/create/{id}/{ProcessType.DerechoEnterramiento}");
+        }
+        catch (Exception ex)
         {
-            using var st = CedulaFallecidoFile.OpenReadStream();
-            await DocumentoService.SubirDocumentoAsync(st, CedulaFallecidoFile.Name, DocumentType.CedulaFallecido, enterramientoId: id);
+            ErrorGlobal = ex.InnerException?.Message ?? ex.Message;
         }
-
-        if (ActaDefuncionFile != null)
-        {
-            using var st = ActaDefuncionFile.OpenReadStream();
-            await DocumentoService.SubirDocumentoAsync(st, ActaDefuncionFile.Name, DocumentType.ActaDefuncion, enterramientoId: id);
-        }
-
-        Nav.NavigateTo($"/recibo/create/{id}?proceso=enterramiento");
     }
+
 }
