@@ -3,6 +3,7 @@
  @rendermode InteractiveServer
 @inject FinalProyect.Services.DerechoEnterramientoService EnterramientoService
 @inject FinalProyect.Services.SolicitanteService SolicitanteService
+@inject FinalProyect.Services.DocumentoService DocumentoService
 @inject NavigationManager Nav
 
 <h3 class="mb-4 text-primary fw-bold">Editar Derecho a Enterramiento</h3>
@@ -19,15 +20,42 @@ else
 
         <div class="card shadow-sm p-4">
 
+            <div class="bg-light rounded p-3 my-3 border">
+                <h6 class="fw-bold text-secondary">Fecha y Hora del Registro</h6>
+
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <label class="fw-semibold">Fecha</label>
+                        <div class="border p-2 rounded bg-white">
+                            @Modelo.Fecha.ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="fw-semibold">Hora</label>
+                        <div class="border p-2 rounded bg-white">
+                            @HoraTexto
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr/>
+
             <h5 class="text-primary mb-3">Datos del Solicitante</h5>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Nombre</label>
-                <input class="form-control" @bind="Modelo.Solicitante.NombreCompleto" disabled />
+                <input class="form-control" @bind="Modelo.Solicitante.NombreCompleto"/>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-semibold">Cédula</label>
-                <input class="form-control" @bind="Modelo.Solicitante.Cedula" disabled />
+                <input class="form-control" @bind="Modelo.Solicitante.Cedula" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <input class="form-control" @bind="Modelo.Solicitante.Telefono" />
             </div>
 
             <hr />
@@ -44,16 +72,34 @@ else
                 <input class="form-control" @bind="Modelo.CedulaFallecido" />
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Fecha</label>
-                    <input type="date" class="form-control" @bind="Modelo.Fecha" />
-                </div>
+            <hr />
 
-                <div class="col-md-4">
-                    <strong>Hora:</strong> @Modelo.Hora.ToString(@"hh\:mm")
-                </div>
-            </div>
+            <h5 class="text-primary mb-3">Documentos Adjuntos</h5>
+
+            @if (Documentos?.Any() == true)
+            {
+                <ul class="list-group mb-3">
+                    @foreach (var doc in Documentos)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-file-alt text-secondary"></i>
+                                @doc.TipoDocumento.ToString()
+                            </span>
+
+                            <a href="@doc.BlobUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                Ver
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="alert alert-warning">No hay documentos subidos.</div>
+            }
+
+            <hr />
 
             <button class="btn btn-warning mt-3">
                 <i class="fas fa-save"></i> Guardar Cambios
@@ -71,6 +117,7 @@ else
     [Parameter] public int Id { get; set; }
     private DerechoEnterramiento? Modelo;
     private string HoraTexto = "";
+    private List<Documento>? Documentos;
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,15 +125,18 @@ else
 
         if (Modelo != null)
         {
-            HoraTexto = Modelo.Hora.ToString(@"hh\:mm");
+            HoraTexto = DateTime.Today.Add (Modelo.Hora).ToString(@"hh\:mm tt");
+
+            Documentos = Modelo.Documentos?.ToList();
         }
     }
 
     private async Task Guardar()
     {
         if (!string.IsNullOrWhiteSpace(HoraTexto))
-            Modelo!.Hora = TimeSpan.Parse(HoraTexto);
+            Modelo!.Hora = DateTime.Parse(HoraTexto).TimeOfDay;
 
+        await SolicitanteService.Actualizar(Modelo!.Solicitante);
         await EnterramientoService.Actualizar(Modelo!);
 
         Nav.NavigateTo("/enterramiento");
