@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject ExpedicionCertificacionService CertService
+@inject ReciboIngresoService ReciboIngresoService
 @inject SolicitanteService SolicitanteService
 @inject NavigationManager Nav
 @inject UserManager<ApplicationUser> UserManager
@@ -61,14 +62,6 @@
 
         <hr />
 
-        <div class="text-primary mb-3">Monto</div>
-
-        <div class="mb-3">
-            <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
-        </div>
-
-        <hr />
-
         <button class="btn btn-success">
             <i class="fas fa-save"></i> Guardar y generar recibo
         </button>
@@ -97,27 +90,51 @@
 
     private async Task Guardar()
     {
-        Modelo.UsuarioId = await GetUserId();
-
-        var solicitante = new Solicitante
+        try
         {
-            NombreCompleto = Modelo.NombreSolicitante,
-            Cedula = Modelo.Cedula,
-            Telefono = Modelo.Telefono
-        };
+            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
 
-        await SolicitanteService.Crear(solicitante);
-        Modelo.SolicitanteId = solicitante.Id;
+            var solicitante = new Solicitante
+            {
+                NombreCompleto = Modelo.NombreSolicitante,
+                Cedula = Modelo.Cedula,
+                Telefono = Modelo.Telefono
+            };
 
-        Modelo.TipoCertificacion = "Certificación de Enterramiento";
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(solicitante);
 
-        Modelo.FechaSolicitud = DateTime.Now;
+            Modelo.TipoCertificacion = "Certificación de Enterramiento";
+            Modelo.FechaSolicitud = DateTime.Now;
 
-        Modelo.Contenido =
-            $"{NombreFallecido}, cédula {CedulaFallecido}, falleció el {FechaFallecimiento:dd/MM/yyyy}.";
+            Modelo.Contenido =
+                $"{NombreFallecido}, cédula {CedulaFallecido}, falleció el {FechaFallecimiento:dd/MM/yyyy}.";
 
-        await CertService.Crear(Modelo);
+            int certificacionId = await CertService.Crear(Modelo);
 
-        Nav.NavigateTo($"/recibo/create/{Modelo.Id}?proceso=certificacion");
+            var monto = ProcessPrices.GetPrice(ProcessType.ExpedicionCertificacion);
+
+            var recibo = new ReciboIngreso
+            {
+                Concepto = Modelo.GetConcepto(),
+                Monto = monto,
+                MontoEnLetras = ProcessPrices.GetPriceText((int)monto),
+                SolicitanteId = Modelo.SolicitanteId,
+                FormaPago = "Efectivo",
+                NumeroRecibo = new Random().Next(1000, 9999).ToString()
+            };
+
+            int reciboId = await ReciboIngresoService.Crear(recibo);
+
+            Modelo.Id = certificacionId;
+            Modelo.ReciboIngresoId = reciboId;
+
+            await CertService.Actualizar(Modelo);
+
+            Nav.NavigateTo($"/certificacion/carta/{certificacionId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: " + ex.Message);
+        }
     }
 }

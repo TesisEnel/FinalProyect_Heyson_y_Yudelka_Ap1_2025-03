@@ -4,6 +4,7 @@ using FinalProyect.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinalProyect.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251205032112_UpdateDocumentoRegistroDocumentacion")]
+    partial class UpdateDocumentoRegistroDocumentacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -320,14 +323,16 @@ namespace FinalProyect.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Extension")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTime?>("FechaSubida")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("NombreArchivo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<int?>("ReciboIngresoId")
                         .HasColumnType("int");
@@ -520,6 +525,7 @@ namespace FinalProyect.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Comentarios")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaRegistro")
@@ -536,6 +542,7 @@ namespace FinalProyect.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ReciboNotariosRuta")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SolicitanteId")

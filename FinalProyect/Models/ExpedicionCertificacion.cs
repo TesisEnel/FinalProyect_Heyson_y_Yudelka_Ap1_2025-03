@@ -24,7 +24,6 @@ public class ExpedicionCertificacion
     public DateTime FechaSolicitud { get; set; } = DateTime.Now;
     public DateTime? FechaEmision { get; set; }
 
-    [Required]
     public string UsuarioId { get; set; } = string.Empty; 
     public ApplicationUser? Usuario { get; set; }
 
@@ -32,13 +31,12 @@ public class ExpedicionCertificacion
     public int SolicitanteId { get; set; }
     public Solicitante? Solicitante { get; set; }
 
-    [Required]
-    public int ReciboIngresoId { get; set; }
+    public int? ReciboIngresoId { get; set; }
     public ReciboIngreso? ReciboIngreso { get; set; }
 
-    public string GetConcepto() => "Expedición de certificación";
-    public int GetMetros() => 0;
+    public ICollection<Documento>? Documentos { get; set; }
 
+    public string GetConcepto() => "Expedición de certificación";
 }
 
 

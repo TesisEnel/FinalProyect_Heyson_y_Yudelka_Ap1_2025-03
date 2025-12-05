@@ -26,14 +26,17 @@ public class RegistroDocumentacionService
         return await _context.RegistrosDocumentacion
             .Include(r => r.Usuario)
             .Include(r => r.Solicitante)
+            .Include(r => r.Documentos)
             .Include(r => r.ReciboIngreso)
+            .ThenInclude(r => r.Documentos)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
-    public async Task<bool> Crear(RegistroDocumentacion registro)
+    public async Task<int> Crear(RegistroDocumentacion registro)
     {
         _context.RegistrosDocumentacion.Add(registro);
-        return await _context.SaveChangesAsync() > 0;
+        await _context.SaveChangesAsync();
+        return registro.Id;
     }
 
     public async Task<bool> Actualizar(RegistroDocumentacion registro)

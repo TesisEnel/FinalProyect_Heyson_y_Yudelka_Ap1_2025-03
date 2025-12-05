@@ -16,13 +16,12 @@ public class RegistroDocumentacion
 
     public decimal Monto { get; set; }
 
-    public string Comentarios { get; set; }
+    public string? Comentarios { get; set; } = "";
 
-    public string ReciboNotariosRuta { get; set; }
+    public string? ReciboNotariosRuta { get; set; } = null;
 
     public DateTime FechaRegistro { get; set; } = DateTime.Now;
 
-    [Required]
     public string UsuarioId { get; set; } = string.Empty; 
     public ApplicationUser? Usuario { get; set; }
 
@@ -30,10 +29,10 @@ public class RegistroDocumentacion
     public int SolicitanteId { get; set; }
     public Solicitante? Solicitante { get; set; }
 
-    [Required]
-    public int ReciboIngresoId { get; set; } 
+    public int? ReciboIngresoId { get; set; } 
     public ReciboIngreso? ReciboIngreso { get; set; }
 
+    public ICollection<Documento>? Documentos { get; set; }
+
     public string GetConcepto() => "Registro de documentación";
-    public int GetMetros() => 0;
 }

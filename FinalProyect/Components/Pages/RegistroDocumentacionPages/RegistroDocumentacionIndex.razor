@@ -15,16 +15,6 @@
     </button>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(MensajeOk))
-{
-    <div class="alert alert-success">@MensajeOk</div>
-}
-
-@if (!string.IsNullOrWhiteSpace(MensajeError))
-{
-    <div class="alert alert-danger">@MensajeError</div>
-}
-
 <div class="card shadow">
     <div class="card-header bg-primary text-white">
         <strong>Listado de Documentaciones Registradas</strong>
@@ -48,9 +38,7 @@
                         <th>Solicitante</th>
                         <th>Cédula</th>
                         <th>Tipo Doc.</th>
-                        <th>Monto</th>
                         <th>Fecha</th>
-                        <th>Recibo de Notarios</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -63,22 +51,7 @@
                             <td>@item.NombreCompleto</td>
                             <td>@item.Cedula</td>
                             <td>@item.TipoDocumentacion</td>
-                            <td>RD$ @item.Monto.ToString("N2")</td>
                             <td>@item.FechaRegistro.ToString("dd/MM/yyyy")</td>
-
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(item.ReciboNotariosRuta))
-                                {
-                                    <a href="@item.ReciboNotariosRuta" target="_blank" class="btn btn-sm btn-outline-info">
-                                        <i class="fas fa-file"></i>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                            </td>
-
                             <td>
                                 <button class="btn btn-info btn-sm me-1" @onclick="() => Ver(item.Id)">
                                     <i class="fas fa-eye"></i>
@@ -91,10 +64,6 @@
                                 <button class="btn btn-success btn-sm me-1" @onclick="() => GenerarRecibo(item.Id)">
                                     <i class="fas fa-receipt"></i>
                                 </button>
-
-                                <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminar(item.Id)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </td>
                         </tr>
                     }
@@ -105,46 +74,9 @@
     </div>
 </div>
 
-@if (MostrarConfirmacion && IdEliminar.HasValue)
-{
-    <div class="modal-backdrop fade show"></div>
-
-    <div class="modal fade show d-block" tabindex="-1" style="display:block;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar eliminación</h5>
-                    <button type="button" class="btn-close" @onclick="CancelarEliminar"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p>¿Está seguro que desea eliminar el registro con ID <strong>@IdEliminar</strong>?</p>
-                    <p class="text-danger mb-0">
-                        Esta acción no se puede deshacer.
-                    </p>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CancelarEliminar">Cancelar</button>
-                    <button class="btn btn-danger" @onclick="Eliminar">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-}
-
 @code {
 
     private List<RegistroDocumentacion>? Lista;
-
-    private int? IdEliminar;
-    private bool MostrarConfirmacion = false;
-    private string? MensajeOk;
-    private string? MensajeError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,43 +86,5 @@
     private void CrearNuevo() => Nav.NavigateTo("/registrodocumentacion/create");
     private void Ver(int id) => Nav.NavigateTo($"/registrodocumentacion/details/{id}");
     private void Editar(int id) => Nav.NavigateTo($"/registrodocumentacion/edit/{id}");
-    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}?proceso=registro-doc");
-
-    private void ConfirmarEliminar(int id)
-    {
-        IdEliminar = id;
-        MostrarConfirmacion = true;
-        MensajeOk = null;
-        MensajeError = null;
-    }
-
-    private async Task Eliminar()
-    {
-        if (!IdEliminar.HasValue)
-            return;
-
-        var ok = await RegistroService.Eliminar(IdEliminar.Value);
-
-        if (ok)
-        {
-            MensajeOk = "Registro eliminado correctamente.";
-            MensajeError = null;
-
-            Lista = await RegistroService.ObtenerTodos();
-        }
-        else
-        {
-            MensajeError = "No se pudo eliminar el registro.";
-            MensajeOk = null;
-        }
-
-        MostrarConfirmacion = false;
-        IdEliminar = null;
-    }
-
-    private void CancelarEliminar()
-    {
-        MostrarConfirmacion = false;
-        IdEliminar = null;
-    }
+    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/RegistroDocumentacion");
 }

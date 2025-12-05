@@ -8,5 +8,6 @@ public enum DocumentType
     ReciboInspector= 4,
     ReciboColegioNotarios = 5,
     FotoReciboSellado = 6,
-    Otro = 7
+    CartaFirmada= 7,
+    Otro = 8
 }

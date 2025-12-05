@@ -26,14 +26,17 @@ public class ExpedicionCertificacionService
         return await _context.ExpedicionesCertificaciones
             .Include(e => e.Usuario)
             .Include(e => e.Solicitante)
+            .Include(e => e.Documentos)
             .Include(e => e.ReciboIngreso)
+            .ThenInclude(r => r.Documentos)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task<bool> Crear(ExpedicionCertificacion certificacion)
+    public async Task<int> Crear(ExpedicionCertificacion certificacion)
     {
         _context.ExpedicionesCertificaciones.Add(certificacion);
-        return await _context.SaveChangesAsync() > 0;
+        await _context.SaveChangesAsync();
+        return certificacion.Id;
     }
 
     public async Task<bool> Actualizar(ExpedicionCertificacion certificacion)

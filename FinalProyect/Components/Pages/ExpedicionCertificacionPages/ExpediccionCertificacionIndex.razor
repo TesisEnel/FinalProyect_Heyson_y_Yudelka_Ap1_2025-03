@@ -89,10 +89,6 @@
                                     <button class="btn btn-success btn-sm me-1" @onclick="() => GenerarRecibo(item.Id)">
                                         <i class="fas fa-receipt"></i>
                                     </button>
-
-                                    <button class="btn btn-outline-secondary btn-sm" @onclick="() => Imprimir(item.Id)">
-                                        <i class="fas fa-print"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -130,6 +126,6 @@
     private void CrearNuevo() => Nav.NavigateTo("/certificacion/create");
     private void Ver(int id) => Nav.NavigateTo($"/certificacion/details/{id}");
     private void Editar(int id) => Nav.NavigateTo($"/certificacion/edit/{id}");
-    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}?proceso=certificacion");
+    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/ExpedicionCertificacion");
     private void Imprimir(int id) => Nav.NavigateTo($"/certificacion/print/{id}");
 }

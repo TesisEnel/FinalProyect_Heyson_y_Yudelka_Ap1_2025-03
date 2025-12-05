@@ -20,6 +20,7 @@ public class DocumentoService
         DocumentType tipo,
         int? enterramientoId = null,
         int? construccionId = null,
+        int? certificacionId = null,
         int? registroId = null,
         int? reciboId = null)
     {
@@ -34,6 +35,7 @@ public class DocumentoService
             TipoDocumento = tipo,
             DerechoEnterramientoId = enterramientoId,
             DerechoConstruccionId = construccionId,
+            ExpedicionCertificacionId = certificacionId,
             RegistroDocumentacionId = registroId,
             ReciboIngresoId = reciboId
         };
