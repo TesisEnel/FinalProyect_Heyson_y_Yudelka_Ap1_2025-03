@@ -54,21 +54,21 @@ else
             <div class="text-primary mb-3">Tipo de Documentación</div>
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Tipo *</label>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tipo *</label>
+                    <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
+                        <option value="">Seleccione un tipo</option>
+                        <option value="Actos de partición">Actos de partición</option>
+                        <option value="Facturas comerciales">Facturas comerciales</option>
+                        <option value="Actos de nulidad">Actos de nulidad</option>
+                        <option value="Pagaré notario">Pagaré notario</option>
+                        <option value="Actos de notoriedad">Actos de notoriedad</option>
+                        <option value="Actos de Desistimiento">Actos de Desistimiento</option>
+                        <option value="Actos de Cancelación de Hipotecas">Actos de Cancelación de Hipotecas</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Modelo.TipoDocumentacion)" />
+                </div>
 
-                <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
-                    <option value="">Seleccione un tipo de documentación</option>
-                    <option value="Actos de partición">Actos de partición</option>
-                    <option value="Facturas comerciales">Facturas comerciales</option>
-                    <option value="Actos de nulidad">Actos de nulidad</option>
-                    <option value="Pagaré notario">Pagaré notario</option>
-                    <option value="Actos de notoriedad">Actos de notoriedad</option>
-                </InputSelect>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Monto a pagar (RD$)</label>
-                <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
             </div>
 
             <div class="mb-3">
@@ -78,25 +78,41 @@ else
 
             <hr />
 
-            <div class="text-primary mb-3">Recibo del Colegio de Notarios</div>
+            <h5 class="text-primary mb-3">Recibo del Colegio de Notarios</h5>
 
-            @if (!string.IsNullOrWhiteSpace(Modelo.ReciboNotariosRuta))
+            @if (ReciboNotariosDoc != null)
             {
-                <div class="mb-2">
+                <div class="mb-3 text-center">
+
                     <strong>Archivo actual:</strong><br />
-                    <a href="@Modelo.ReciboNotariosRuta" target="_blank">
-                        @System.IO.Path.GetFileName(Modelo.ReciboNotariosRuta)
+
+                    @if (ReciboNotariosDoc.Extension.ToLower().Contains("pdf"))
+                    {
+                        <img src="_content/FinalProyect/pdf_icon.png"
+                             class="img-thumbnail mb-2"
+                             style="height:80px;" />
+                    }
+                    else
+                    {
+                        <img src="@ReciboNotariosDoc.BlobUrl"
+                             class="img-thumbnail mb-2"
+                             style="max-width:200px;object-fit:cover;" />
+                    }
+
+                    <br />
+
+                    <a href="@ReciboNotariosDoc.BlobUrl" target="_blank" class="btn btn-primary btn-sm">
+                        Ver documento
                     </a>
                 </div>
-            }
-            else
-            {
-                <div class="text-muted">No hay archivo subido.</div>
+
+                <div class="alert alert-secondary text-center">
+                    Si sube un nuevo archivo, reemplazará al existente.
+                </div>
             }
 
             <div class="mb-3">
-                <label class="form-label">Subir nuevo (opcional)</label>
-                <InputFile OnChange="OnReciboNuevo" class="form-control" />
+                <InputFile OnChange="OnReciboSelected" class="form-control" />
             </div>
 
             <hr />
@@ -110,45 +126,10 @@ else
                 <button class="btn btn-secondary" @onclick="Volver">
                     <i class="fas fa-arrow-left"></i> Volver
                 </button>
-
-                <button class="btn btn-danger ms-auto" @onclick="ConfirmarDelete">
-                    <i class="fas fa-trash"></i> Eliminar
-                </button>
             </div>
 
         </EditForm>
 
-    </div>
-}
-
-<!-- ==============
-     MODAL DELETE
-================= -->
-@if (ShowDeleteModal)
-{
-    <div class="modal-backdrop fade show"></div>
-
-    <div class="modal fade show d-block" tabindex="-1" style="display:block;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Eliminar Registro</h5>
-                    <button type="button" class="btn-close" @onclick="CancelarDelete"></button>
-                </div>
-
-                <div class="modal-body">
-                    <p>¿Seguro que desea eliminar este registro?</p>
-                    <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CancelarDelete">Cancelar</button>
-                    <button class="btn btn-danger" @onclick="EliminarRegistro">Eliminar</button>
-                </div>
-
-            </div>
-        </div>
     </div>
 }
 
@@ -157,66 +138,58 @@ else
     [Parameter] public int Id { get; set; }
 
     private RegistroDocumentacion? Modelo;
-
-    private IBrowserFile? ArchivoNuevo;
-    private string? Error;
-
-    private bool ShowDeleteModal = false;
+    private Documento? ReciboNotariosDoc;
+    private IBrowserFile? ReciboFile;
+    private string Error = "";
 
     protected override async Task OnInitializedAsync()
     {
         Modelo = await RegistroService.ObtenerPorId(Id);
 
-        if (Modelo == null)
-            Error = "No se encontró el registro.";
+        if (Modelo != null)
+        {
+            ReciboNotariosDoc = Modelo.Documentos?
+                .FirstOrDefault(d => d.TipoDocumento == DocumentType.ReciboColegioNotarios);
+        }
     }
 
-    private void OnReciboNuevo(InputFileChangeEventArgs e)
+    private void OnReciboSelected(InputFileChangeEventArgs e)
     {
-        ArchivoNuevo = e.File;
+        ReciboFile = e.File;
     }
 
     private async Task Guardar()
     {
         try
         {
-            // Actualizar solicitante base
-            await SolicitanteService.Actualizar(Modelo.Solicitante!);
-
-            // Si hay archivo nuevo subirlo
-            if (ArchivoNuevo != null)
+            if (ReciboFile != null)
             {
-                using var st = ArchivoNuevo.OpenReadStream(long.MaxValue);
+                using var st = ReciboFile.OpenReadStream(long.MaxValue);
+                var url = await BlobService.UploadFileAsync(st, ReciboFile.Name);
 
-                var url = await BlobService.UploadFileAsync(st, ArchivoNuevo.Name);
+                var doc = new Documento
+                {
+                    NombreArchivo = ReciboFile.Name,
+                    BlobUrl = url,
+                    Extension = Path.GetExtension(ReciboFile.Name),
+                    TipoDocumento = DocumentType.ReciboColegioNotarios,
+                    RegistroDocumentacionId = Modelo!.Id,
+                    FechaSubida = DateTime.Now
+                };
 
-                Modelo.ReciboNotariosRuta = url;
+                await DocumentoService.Crear(doc);
+
+                ReciboNotariosDoc = doc;
             }
 
-            await RegistroService.Actualizar(Modelo);
+            await RegistroService.Actualizar(Modelo!);
+
             Nav.NavigateTo("/registrodocumentacion");
         }
         catch (Exception ex)
         {
-            Error = $"Error al guardar: {ex.Message}";
+            Console.WriteLine("Error guardando: " + ex.Message);
         }
     }
-
-    private void ConfirmarDelete()
-    {
-        ShowDeleteModal = true;
-    }
-
-    private void CancelarDelete()
-    {
-        ShowDeleteModal = false;
-    }
-
-    private async Task EliminarRegistro()
-    {
-        await RegistroService.Eliminar(Id);
-        Nav.NavigateTo("/registrodocumentacion");
-    }
-
     private void Volver() => Nav.NavigateTo("/registrodocumentacion");
 }

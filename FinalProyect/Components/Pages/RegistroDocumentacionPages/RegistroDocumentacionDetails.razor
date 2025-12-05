@@ -39,7 +39,6 @@ else
         <div class="text-primary mb-3">Detalles del Registro</div>
 
         <p><strong>Tipo de Documentación:</strong> @Modelo.TipoDocumentacion</p>
-        <p><strong>Monto:</strong> RD$ @Modelo.Monto.ToString("N2")</p>
         <p><strong>Comentarios:</strong> @(string.IsNullOrWhiteSpace(Modelo.Comentarios) ? "—" : Modelo.Comentarios)</p>
         <p><strong>Fecha del Registro:</strong> @Modelo.FechaRegistro.ToString("dd/MM/yyyy")</p>
 
@@ -47,16 +46,12 @@ else
 
         <div class="text-primary mb-3">Recibo del Colegio de Notarios</div>
 
-        @if (!string.IsNullOrWhiteSpace(Modelo.ReciboNotariosRuta))
-        {
-            <a href="@Modelo.ReciboNotariosRuta" target="_blank" class="btn btn-outline-info">
-                <i class="fas fa-file"></i> Ver documento
-            </a>
-        }
-        else
-        {
-            <p class="text-muted">No hay documento subido.</p>
-        }
+        <h6 class="text-primary fw-bold">Documentos Adjuntos</h6>
+
+        <div class="row">
+            @DocumentCard("Recibo Colegio de Notarios", DocumentType.ReciboColegioNotarios)
+            @DocumentCard("Recibo Sellado", DocumentType.FotoReciboSellado)
+        </div>
 
         <hr />
 
@@ -96,6 +91,65 @@ else
         }
     }
 
+    private RenderFragment DocumentCard(string titulo, DocumentType tipo) => __builder =>
+{
+    Documento? doc = null;
+
+    doc = Modelo?.Documentos?.FirstOrDefault(d => d.TipoDocumento == tipo);
+
+    if (doc == null && tipo == DocumentType.FotoReciboSellado)
+    {
+        doc = Modelo?.ReciboIngreso?.Documentos?
+            .FirstOrDefault(d => d.TipoDocumento == DocumentType.FotoReciboSellado);
+    }
+
+    __builder.OpenElement(0, "div");
+    __builder.AddAttribute(1, "class", "col-md-3 mb-3");
+
+    __builder.OpenElement(2, "div");
+    __builder.AddAttribute(3, "class", "card shadow-sm text-center p-2");
+
+    __builder.OpenElement(4, "h6");
+    __builder.AddContent(5, titulo);
+    __builder.CloseElement();
+
+    if (doc == null)
+    {
+        __builder.OpenElement(6, "div");
+        __builder.AddAttribute(7, "class", "text-muted small");
+        __builder.AddContent(8, "No disponible");
+        __builder.CloseElement();
+    }
+    else
+    {
+        if (doc.Extension.ToLower().Contains("pdf"))
+        {
+            __builder.OpenElement(9, "img");
+            __builder.AddAttribute(10, "src", "_content/FinalProyect/pdf_icon.png");
+            __builder.AddAttribute(11, "class", "img-thumbnail mb-2");
+            __builder.AddAttribute(12, "style", "height:80px;");
+            __builder.CloseElement();
+        }
+        else
+        {
+            __builder.OpenElement(13, "img");
+            __builder.AddAttribute(14, "src", doc.BlobUrl);
+            __builder.AddAttribute(15, "class", "img-thumbnail mb-2");
+            __builder.AddAttribute(16, "style", "height:80px;object-fit:cover;");
+            __builder.CloseElement();
+        }
+
+        __builder.OpenElement(17, "a");
+        __builder.AddAttribute(18, "href", doc.BlobUrl);
+        __builder.AddAttribute(19, "target", "_blank");
+        __builder.AddAttribute(20, "class", "btn btn-primary btn-sm");
+        __builder.AddContent(21, "Ver documento");
+        __builder.CloseElement();
+    }
+
+    __builder.CloseElement();
+    __builder.CloseElement();
+};
     private void Volver() => Nav.NavigateTo("/registrodocumentacion");
 
     private void Editar(int id)

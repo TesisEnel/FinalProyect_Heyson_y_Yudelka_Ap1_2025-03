@@ -19,7 +19,7 @@
 
 <div class="card shadow p-4">
 
-    <EditForm FormName="RegistroDocForm" Model="@Modelo" OnValidSubmit="Guardar">
+    <EditForm Model="@Modelo" OnValidSubmit="Guardar">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -28,13 +28,11 @@
         <div class="mb-3">
             <label class="form-label fw-semibold">Nombre completo *</label>
             <InputText class="form-control" @bind-Value="Modelo.NombreCompleto" />
-            <ValidationMessage For="@(() => Modelo.NombreCompleto)" />
         </div>
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Cédula *</label>
             <InputText class="form-control" @bind-Value="Modelo.Cedula" />
-            <ValidationMessage For="@(() => Modelo.Cedula)" />
         </div>
 
         <div class="mb-3">
@@ -50,36 +48,30 @@
             <label class="form-label fw-semibold">Tipo *</label>
 
             <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
-                <option value="">Seleccione un tipo de documentación</option>
-                <option value="Actos de partición">Actos de partición</option>
-                <option value="Facturas comerciales">Facturas comerciales</option>
-                <option value="Actos de nulidad">Actos de nulidad</option>
-                <option value="Pagaré notario">Pagaré notario</option>
-                <option value="Actos de notoriedad">Actos de notoriedad</option>
+                <option value="">Seleccione un tipo</option>
+                <option>Actos de partición</option>
+                <option>Facturas comerciales</option>
+                <option>Actos de nulidad</option>
+                <option>Pagaré notario</option>
+                <option>Actos de notoriedad</option>
+                <option>Actos de Desistimiento</option>
+                <option>Actos de Cancelación de Hipotecas</option>
             </InputSelect>
-
-            <ValidationMessage For="@(() => Modelo.TipoDocumentacion)" />
         </div>
 
         <div class="mb-3">
-            <label class="form-label fw-semibold">Monto a pagar (RD$) *</label>
-            <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
-            <ValidationMessage For="@(() => Modelo.Monto)" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Comentarios u Observaciones</label>
+            <label class="form-label fw-semibold">Comentarios</label>
             <InputTextArea class="form-control" @bind-Value="Modelo.Comentarios" />
         </div>
 
         <hr />
 
-        <div class="text-primary mb-3">Recibo del Colegio de Notarios *</div>
-
-        <div class="mb-3">
-            <InputFile class="form-control" OnChange="OnReciboSelected" />
-            <ValidationMessage For="@(() => ReciboNotariosFile)" />
-        </div>
+        <div class="text-primary fw-bold mb-2">Recibo del Colegio de Notarios *</div>
+        <InputFile OnChange="OnReciboSelected" class="form-control" />
+        @if (ErrorArchivo != null)
+        {
+            <div class="text-danger mt-1">@ErrorArchivo</div>
+        }
 
         <hr />
 
@@ -94,12 +86,13 @@
 @code {
 
     private RegistroDocumentacion Modelo { get; set; } = new();
-
     private IBrowserFile? ReciboNotariosFile;
+    private string? ErrorArchivo;
 
     private void OnReciboSelected(InputFileChangeEventArgs e)
     {
         ReciboNotariosFile = e.File;
+        ErrorArchivo = null;
     }
 
     private async Task<string> GetUserId()
@@ -112,35 +105,48 @@
 
     private async Task Guardar()
     {
-        Modelo.UsuarioId = await GetUserId();
-        Modelo.FechaRegistro = DateTime.Now;
-
-        // Crear solicitante si no existe
-        var solicitante = new Solicitante
+        try
         {
-            NombreCompleto = Modelo.NombreCompleto,
-            Cedula = Modelo.Cedula,
-            Telefono = Modelo.Telefono
-        };
+            if (ReciboNotariosFile == null)
+            {
+                ErrorArchivo = "Debe subir el recibo del Colegio de Notarios.";
+                return;
+            }
 
-        await SolicitanteService.Crear(solicitante);
-        Modelo.SolicitanteId = solicitante.Id;
+            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
+            Modelo.FechaRegistro = DateTime.Now;
 
-        // Guardar Registro
-        await RegistroService.Crear(Modelo);
+            var solicitante = new Solicitante
+            {
+                NombreCompleto = Modelo.NombreCompleto,
+                Cedula = Modelo.Cedula,
+                Telefono = Modelo.Telefono
+            };
 
-        // Guardar recibo de notarios
-        if (ReciboNotariosFile != null)
-        {
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(solicitante);
+
+            Modelo.Id = await RegistroService.Crear(Modelo);
+
             using var st = ReciboNotariosFile.OpenReadStream(long.MaxValue);
-
             var url = await BlobService.UploadFileAsync(st, ReciboNotariosFile.Name);
 
-            Modelo.ReciboNotariosRuta = url;
-            await RegistroService.Actualizar(Modelo);
-        }
+            var documento = new Documento
+            {
+                NombreArchivo = ReciboNotariosFile.Name,
+                BlobUrl = url,
+                Extension = Path.GetExtension(ReciboNotariosFile.Name),
+                TipoDocumento = DocumentType.ReciboColegioNotarios,
+                RegistroDocumentacionId = Modelo.Id,
+                FechaSubida = DateTime.Now
+            };
 
-        Nav.NavigateTo($"/recibo/create/{Modelo.Id}?proceso=registrodocumentacion");
+            await DocumentoService.Crear(documento);
+
+            Nav.NavigateTo($"/recibo/create/{Modelo.Id}/RegistroDocumentacion");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ ERROR Guardando Registro: " + ex.Message);
+        }
     }
 }
-
