@@ -5,16 +5,18 @@
 @using FinalProyect.Services
 
 @inject ExpedicionCertificacionService CertService
+@inject ReciboIngresoService ReciboIngresoService
+@inject DocumentoService DocumentoService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="container my-4">
 
-    <div class="d-flex justify-content-between mb-3">
-        <button class="btn btn-secondary" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> Volver
-        </button>
+    <button class="btn btn-secondary mb-3" @onclick="Volver">
+        <i class="fas fa-arrow-left"></i> Volver
+    </button>
 
+    <div class="d-flex justify-content-between mb-3">
         <div>
             <button class="btn btn-primary me-2" @onclick="Imprimir">
                 <i class="fas fa-print"></i> Imprimir
@@ -33,6 +35,10 @@
     else
     {
         <div id="certificado" class="carta shadow p-5 bg-white">
+
+            <div class="text-center mb-3">
+                <img src="images/logo_villariva.png" style="width:140px;" />
+            </div>
 
             <h4 class="text-center fw-bold">ALCALDÍA MUNICIPAL DE VILLA RIVA</h4>
             <h6 class="text-center fw-bold">RNC 4300044199</h6>
@@ -71,6 +77,35 @@
             </div>
 
         </div>
+
+        <hr />
+
+        <h5 class="text-primary mt-4">Carta Firmada</h5>
+
+        @if (CartaFirmada != null)
+        {
+            <div class="mb-2">
+                <strong>Archivo subido:</strong>
+                <a href="@CartaFirmada.BlobUrl" target="_blank">@CartaFirmada.NombreArchivo</a>
+            </div>
+
+            <button class="btn btn-success mt-2"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/ExpedicionCertificacion"))">
+                <i class="fas fa-receipt"></i> Generar Recibo
+            </button>
+        }
+        else
+        {
+            <InputFile OnChange="OnCartaFirmadaSelected" class="form-control mb-2" />
+
+            <button class="btn btn-warning" @onclick="GuardarCartaFirmada">
+                <i class="fas fa-upload"></i> Subir Carta Firmada
+            </button>
+
+            <div class="alert alert-warning mt-2">
+                Debe subir la carta firmada antes de generar el recibo.
+            </div>
+        }
     }
 </div>
 
@@ -106,6 +141,10 @@
 
     private ExpedicionCertificacion? Modelo;
     private string FechaTexto = "";
+    private IBrowserFile? CartaFirmadaFile;
+
+    Documento? CartaFirmada => Modelo?.Documentos?
+        .FirstOrDefault(d => d.TipoDocumento == DocumentType.CartaFirmada);
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,9 +152,29 @@
 
         if (Modelo != null)
         {
-            FechaTexto = $"{Modelo.FechaSolicitud:dd} días del mes " +
-                          $"{Modelo.FechaSolicitud:MM} del año {Modelo.FechaSolicitud:yyyy}";
+            FechaTexto = $"{Modelo.FechaSolicitud:dd} días del mes {Modelo.FechaSolicitud:MM} del año {Modelo.FechaSolicitud:yyyy}";
         }
+    }
+
+    private void OnCartaFirmadaSelected(InputFileChangeEventArgs e)
+    {
+        CartaFirmadaFile = e.File;
+    }
+
+    private async Task GuardarCartaFirmada()
+    {
+        if (CartaFirmadaFile == null) return;
+
+        using var stream = CartaFirmadaFile.OpenReadStream();
+
+        await DocumentoService.SubirDocumentoAsync(
+            stream,
+            CartaFirmadaFile.Name,
+            DocumentType.CartaFirmada,
+            certificacionId: Modelo!.Id
+        );
+
+        Modelo = await CertService.ObtenerPorId(Id);
     }
 
     private async Task Imprimir()
