@@ -128,10 +128,9 @@
                     construccionId: construccionId
                 );
             }
-
+            var concepto = ExpedicionCertificacion.Concepto;
             var recibo = new ReciboIngreso
             {
-                Concepto = Modelo.GetConcepto(),
                 Monto = Modelo.Monto,
                 MontoEnLetras = ProcessPrices.GetPriceText((int)Modelo.Monto),
                 SolicitanteId = Modelo.SolicitanteId,

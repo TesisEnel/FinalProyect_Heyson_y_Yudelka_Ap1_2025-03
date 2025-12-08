@@ -115,10 +115,9 @@
             int certificacionId = await CertService.Crear(Modelo);
 
             var monto = ProcessPrices.GetPrice(ProcessType.ExpedicionCertificacion);
-
+            var concepto = ExpedicionCertificacion.Concepto;
             var recibo = new ReciboIngreso
             {
-                Concepto = Modelo.GetConcepto(),
                 Monto = monto,
                 MontoEnLetras = ProcessPrices.GetPriceText((int)monto),
                 SolicitanteId = Modelo.SolicitanteId,
