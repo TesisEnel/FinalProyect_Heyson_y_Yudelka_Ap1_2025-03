@@ -38,21 +38,20 @@
 
     <ul class="nav nav-pills flex-column mb-auto">
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="" Match="NavLinkMatch.All">
-                <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-home"></i>
-                </div>
-                <span class="nav-link-text ms-2 fw-normal">Inicio</span>
-            </NavLink>
-        </li>
-
         <AuthorizeView>
             <Authorized Context="auth">
                 @{
                     var user = auth.User;
                     bool isAdmin = user.IsInRole("Admin");
                 }
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="" Match="NavLinkMatch.All">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 fw-normal">Inicio</span>
+                    </NavLink>
+                </li>
 
                 <li class="nav-item mt-4 mb-2">
                     <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Procesos</h6>
@@ -152,7 +151,7 @@
                 <li class="nav-item mb-2">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <input type="hidden" name="ReturnUrl" value="Account/Login" />
                         <button type="submit" class="nav-link text-white d-flex align-items-center w-100 border-0 bg-transparent text-start py-2 px-3">
                             <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
                                 <i class="fas fa-sign-out-alt"></i>
