@@ -1,6 +1,7 @@
 ﻿using FinalProyect.Data;
-using FinalProyect.Models;
 using System.ComponentModel.DataAnnotations;
+
+namespace FinalProyect.Models;
 
 public class DerechoEnterramiento
 {
@@ -33,6 +34,6 @@ public class DerechoEnterramiento
 
     public ICollection<Documento>? Documentos { get; set; }
 
-    public string GetConcepto() => "Derecho a enterramiento";
-    public int GetMetros() => 0;
+    public static string GetConcepto() => "Derecho a enterramiento";
+    public static int GetMetros() => 0;
 }
