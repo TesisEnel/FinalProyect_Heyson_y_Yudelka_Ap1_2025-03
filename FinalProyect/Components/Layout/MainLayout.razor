@@ -1,14 +1,19 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
 
-<div class="page-wrapper d-flex">
-
-    <NavMenu />
-
-    <main class="main-content flex-grow-1 p-4">
+<div class="page-wrapper"> 
+    <aside class="sidebar-wrapper"> 
+        <NavMenu /> 
+    </aside> 
+    <main class="main-content d-flex flex-column">
+        <Topbar />
+    <div class="container-fluid py-4 flex-grow-1"> 
         @Body
-    </main>
+    </div>
 
+    <Footer/>
+
+    </main>
 </div>
 
 <AuthorizeView>
