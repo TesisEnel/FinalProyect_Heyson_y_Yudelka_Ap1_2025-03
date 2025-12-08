@@ -47,7 +47,7 @@ public class ExpedicionCertificacion
 
     public ICollection<Documento>? Documentos { get; set; }
 
-    public string GetConcepto() => "Expedición de certificación";
+    public static string GetConcepto() => "Expedición de certificación";
 }
 
 
