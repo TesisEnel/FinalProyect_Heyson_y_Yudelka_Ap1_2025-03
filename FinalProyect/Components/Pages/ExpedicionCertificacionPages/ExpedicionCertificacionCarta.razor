@@ -1,0 +1,194 @@
+﻿@page "/certificacion/carta/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+
+@inject ExpedicionCertificacionService CertService
+@inject ReciboIngresoService ReciboIngresoService
+@inject DocumentoService DocumentoService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="container my-4">
+
+    <button class="btn btn-secondary mb-3" @onclick="Volver">
+        <i class="fas fa-arrow-left"></i> Volver
+    </button>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <button class="btn btn-primary me-2" @onclick="Imprimir">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+
+            <button class="btn btn-warning" @onclick="DescargarPDF">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    @if (Modelo == null)
+    {
+        <div class="alert alert-danger">No se encontró la certificación.</div>
+    }
+    else
+    {
+        <div id="certificado" class="carta shadow p-5 bg-white">
+
+            <div class="text-center mb-3">
+                <img src="images/logo_villariva.png" style="width:140px;" />
+            </div>
+
+            <h4 class="text-center fw-bold">ALCALDÍA MUNICIPAL DE VILLA RIVA</h4>
+            <h6 class="text-center fw-bold">RNC 4300044199</h6>
+
+            <h4 class="text-center mt-4 fw-bold text-decoration-underline">
+                CERTIFICACIÓN DE ENTERRAMIENTO
+            </h4>
+
+            <p class="mt-4">
+                Quien suscribe, <b>Lic. LUZ ATHANY UREÑA MERCEDES</b>, dominicana, mayor de edad,
+                portadora de la cédula No. <b>01-1405540-3</b>,
+                Tesorera Municipal de Villa Riva, Provincia Duarte, República Dominicana.
+            </p>
+
+            <h5 class="text-center mt-4 fw-bold">CERTIFICO Y DOY FE</h5>
+
+            <p class="mt-3">
+                Que en el cementerio de esta ciudad y municipio de Villa Riva se encuentran sepultados
+                los restos de quien en vida se llamó <b>@Modelo.Contenido</b>.
+            </p>
+
+            <p>
+                Certificación que se expide a solicitud de <b>@Modelo.NombreSolicitante</b>,
+                portador(a) de la cédula <b>@Modelo.Cedula</b>.
+            </p>
+
+            <p class="mt-4">
+                Dada en esta honorable Alcaldía Municipal de Villa Riva, Prov. Duarte,
+                a los <b>@FechaTexto</b>.
+            </p>
+
+            <div class="text-center mt-5">
+                <hr style="width: 250px; margin: auto;" />
+                <p class="fw-bold mb-0">LIC. LUZ ATHANY UREÑA MERCEDES</p>
+                <p class="mt-0">Tesorera Municipal</p>
+            </div>
+
+        </div>
+
+        <hr />
+
+        <h5 class="text-primary mt-4">Carta Firmada</h5>
+
+        @if (CartaFirmada != null)
+        {
+            <div class="mb-2">
+                <strong>Archivo subido:</strong>
+                <a href="@CartaFirmada.BlobUrl" target="_blank">@CartaFirmada.NombreArchivo</a>
+            </div>
+
+            <button class="btn btn-success mt-2"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/ExpedicionCertificacion"))">
+                <i class="fas fa-receipt"></i> Generar Recibo
+            </button>
+        }
+        else
+        {
+            <InputFile OnChange="OnCartaFirmadaSelected" class="form-control mb-2" />
+
+            <button class="btn btn-warning" @onclick="GuardarCartaFirmada">
+                <i class="fas fa-upload"></i> Subir Carta Firmada
+            </button>
+
+            <div class="alert alert-warning mt-2">
+                Debe subir la carta firmada antes de generar el recibo.
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .carta {
+        width: 21cm;
+        min-height: 27cm;
+        margin: auto;
+        font-size: 18px;
+        line-height: 1.6;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden !important;
+        }
+
+        #certificado, #certificado * {
+            visibility: visible !important;
+        }
+
+        #certificado {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    }
+</style>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private ExpedicionCertificacion? Modelo;
+    private string FechaTexto = "";
+    private IBrowserFile? CartaFirmadaFile;
+
+    Documento? CartaFirmada => Modelo?.Documentos?
+        .FirstOrDefault(d => d.TipoDocumento == DocumentType.CartaFirmada);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await CertService.ObtenerPorId(Id);
+
+        if (Modelo != null)
+        {
+            FechaTexto = $"{Modelo.FechaSolicitud:dd} días del mes {Modelo.FechaSolicitud:MM} del año {Modelo.FechaSolicitud:yyyy}";
+        }
+    }
+
+    private void OnCartaFirmadaSelected(InputFileChangeEventArgs e)
+    {
+        CartaFirmadaFile = e.File;
+    }
+
+    private async Task GuardarCartaFirmada()
+    {
+        if (CartaFirmadaFile == null) return;
+
+        using var stream = CartaFirmadaFile.OpenReadStream();
+
+        await DocumentoService.SubirDocumentoAsync(
+            stream,
+            CartaFirmadaFile.Name,
+            DocumentType.CartaFirmada,
+            certificacionId: Modelo!.Id
+        );
+
+        Modelo = await CertService.ObtenerPorId(Id);
+    }
+
+    private async Task Imprimir()
+    {
+        await JS.InvokeVoidAsync("printSection", "certificado");
+    }
+
+    private async Task DescargarPDF()
+    {
+        await JS.InvokeVoidAsync("print");
+    }
+
+    private void Volver()
+    {
+        Nav.NavigateTo("/certificacion");
+    }
+}

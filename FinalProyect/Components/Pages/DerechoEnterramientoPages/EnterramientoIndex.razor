@@ -1,0 +1,116 @@
+﻿@page "/enterramiento"
+@rendermode InteractiveServer
+@using FinalProyect.Models
+@inject FinalProyect.Services.DerechoEnterramientoService EnterramientoService
+@inject NavigationManager Nav
+
+<div class="container-fluid">
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div class="h4 mb-0 text-gray-800">Derecho a Enterramiento</div>
+
+        <button class="btn btn-primary" @onclick="CrearNuevo">
+            <i class="fas fa-plus"></i> Nuevo Derecho a Enterramiento
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-primary text-white">
+                <strong>Registro de Derecho a Enterramientos</strong>
+            </div>
+
+            <input class="form-control w-25"
+                   placeholder="Buscar por fallecido..."
+                   @bind="Filtro"
+                   @bind:event="oninput" />
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Solicitante</th>
+                            <th>Fallecido</th>
+                            <th>Cédula</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (ListaFiltrada.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">
+                                    No hay registros para mostrar.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in ListaFiltrada)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>@item.Solicitante?.NombreCompleto</td>
+                                    <td>@item.NombreFallecido</td>
+                                    <td>@item.CedulaFallecido</td>
+                                    <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                                    <td>@DateTime.Today.Add(item.Hora).ToString("hh:mm tt")</td>
+
+                                    <td class="text-center">
+                                        <div class="btn-group">
+
+                                            <button class="btn btn-info btn-sm" @onclick="() => Ver(item.Id)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+
+                                            <button class="btn btn-warning btn-sm" @onclick="() => Editar(item.Id)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
+                                            <button class="btn btn-success btn-sm" @onclick="() => Recibo(item.Id)">
+                                                <i class="fas fa-receipt"></i>
+                                            </button>
+
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<DerechoEnterramiento> Lista = new();
+    private string Filtro = "";
+
+    private List<DerechoEnterramiento> ListaFiltrada =>
+        string.IsNullOrWhiteSpace(Filtro)
+            ? Lista
+            : Lista.Where(x =>
+                x.NombreFallecido.Contains(Filtro, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lista = await EnterramientoService.ObtenerTodos();
+    }
+
+    private void CrearNuevo() => Nav.NavigateTo("/enterramiento/create");
+    private void Ver(int id) => Nav.NavigateTo($"/enterramiento/details/{id}");
+    private void Editar(int id) => Nav.NavigateTo($"/enterramiento/edit/{id}");
+    private void Recibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/DerechoEnterramiento");
+}

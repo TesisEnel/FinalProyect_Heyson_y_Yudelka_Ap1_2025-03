@@ -1,7 +1,301 @@
 ﻿@page "/"
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Home</PageTitle>
+@inject ReciboIngresoService ReciboService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h1>Hello, world!</h1>
+<PageTitle>Inicio - Tesorería</PageTitle>
 
-Welcome to your new app.
+<style>
+    :root {
+        --color-navy: #171840;
+        --color-navy-light: #232452;
+        --color-steel: #4b5d67;
+        --color-teal: #2c7da0;
+    }
+
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Fondos de las tarjetas */
+    .card-navy {
+        background-color: var(--color-navy);
+        color: white;
+    }
+
+    .card-steel {
+        background-color: var(--color-navy-light);
+        color: white;
+    }
+
+    .card-teal {
+        background-color: var(--color-teal);
+        color: white;
+    }
+
+    .card-white {
+        background-color: white;
+        color: var(--color-navy);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* Iconos estilo cristal */
+    .icon-glass {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background-color: rgba(255,255,255,0.15);
+        backdrop-filter: blur(5px);
+        color: white;
+    }
+
+    .card-white .icon-glass {
+        background-color: rgba(23, 24, 64, 0.1);
+        color: var(--color-navy);
+    }
+
+    /* Banner de bienvenida */
+    .welcome-banner {
+        background-color: white;
+        border-radius: 12px;
+        border-left: 6px solid var(--color-navy);
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .btn-navy {
+        background-color: var(--color-navy);
+        color: white;
+        border-radius: 20px;
+    }
+
+        .btn-navy:hover {
+            background-color: var(--color-navy-light);
+            color: white;
+        }
+</style>
+
+<div class="container-fluid py-4" style="background-color: #f8f9fa;">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-banner d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="fw-bold mb-1" style="color: #171840;">Bienvenida, @UserName</h2>
+                    <p class="text-secondary mb-0">Resumen de actividad financiera municipal</p>
+                </div>
+                <div class="d-none d-md-block text-end opacity-75">
+                    <i class="fas fa-calendar-alt me-2" style="color: #171840;"></i>
+                    <span style="color: #171840;">@DateTime.Now.ToString("dd MMMM yyyy")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="stat-card card-navy p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="small text-uppercase mb-1 opacity-75 fw-bold">Procesos Hoy</p>
+                        <h2 class="mb-0 fw-bold" style="color: #000000;">@ProcesosHoy</h2>
+                    </div>
+                    <div class="icon-glass">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2 border-top border-white border-opacity-10">
+                    <span class="small opacity-75">Total Histórico: <strong>@TotalProcesos</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="stat-card card-steel p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="small text-uppercase mb-1 opacity-75 fw-bold">Recaudado Hoy</p>
+                        <h2 class="mb-0 fw-bold" style="color: #000000;">RD$ @DineroHoy.ToString("N0")</h2>
+                    </div>
+                    <div class="icon-glass">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2 border-top border-white border-opacity-10">
+                    <span class="small opacity-75">Total Acumulado</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="stat-card card-teal p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="small text-uppercase mb-1 opacity-75 fw-bold">Documentos</p>
+                        <h2 class="mb-0 fw-bold" style="color: #000000;">@DocumentosTotal</h2>
+                    </div>
+                    <div class="icon-glass">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2 border-top border-white border-opacity-10">
+                    <span class="small opacity-75">Archivos Digitales</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-3">
+            <div class="stat-card card-white p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="small text-uppercase mb-1 text-secondary fw-bold">Solicitantes</p>
+                        <h2 class="mb-0 fw-bold" style="color: #000000;">@TotalSolicitantes</h2>
+                    </div>
+                    <div class="icon-glass">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2 border-top border-light">
+                    <span class="small text-success fw-bold">
+                        <i class="fas fa-check-circle me-1"></i> Activos
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold" style="color: #171840;">Últimos Movimientos</h5>
+                        <p class="small text-muted mb-0">Registro en tiempo real</p>
+                    </div>
+                    <a href="historial" class="btn btn-sm btn-navy px-3">Ver Todo</a>
+                </div>
+
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="font-size: 0.75rem;">Concepto</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="font-size: 0.75rem;">Solicitante</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="font-size: 0.75rem;">Fecha</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7" style="font-size: 0.75rem;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (UltimosRegistros == null)
+                                {
+                                    <tr><td colspan="4" class="text-center py-5 text-muted">Cargando datos...</td></tr>
+                                }
+                                else if (!UltimosRegistros.Any())
+                                {
+                                    <tr><td colspan="4" class="text-center py-5 text-muted">No hay registros recientes.</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in UltimosRegistros)
+                                    {
+                                        <tr>
+                                            <td class="ps-4 py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="icon-glass me-3" style="width: 36px; height: 36px; font-size: 0.9rem; background-color: #F0F5F5; color: #171840;">
+                                                        <i class="fas fa-file-contract"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0 text-sm fw-bold text-dark">@item.Concepto</h6>
+                                                        <span class="text-xs text-muted">ID: #@item.Id</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-column">
+                                                    <span class="text-sm font-weight-bold text-dark">@(item.Solicitante?.NombreCompleto ?? "---")</span>
+                                                    <span class="text-xs text-muted">@(item.Solicitante?.Cedula ?? "")</span>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="text-secondary text-xs fw-bold">@item.FechaEmision.ToString("dd/MM/yyyy")</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge" style="background-color: #2c7da0; color: white; font-weight: bold;">
+                                                    RD$ @item.Monto.ToString("N0")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string UserName = "Tesorera";
+    private List<ReciboIngreso>? UltimosRegistros;
+
+    private int ProcesosHoy = 0;
+    private int TotalProcesos = 0;
+    private decimal DineroHoy = 0;
+    private decimal DineroTotal = 0;
+    private int DocumentosTotal = 0;
+    private int TotalSolicitantes = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                UserName = user.Identity.Name ?? "Usuario";
+            }
+
+            var todos = await ReciboService.ObtenerTodos();
+
+            if (todos != null)
+            {
+                var today = DateTime.Today;
+                var registrosHoy = todos.Where(x => x.FechaEmision.Date == today).ToList();
+
+                ProcesosHoy = registrosHoy.Count;
+                TotalProcesos = todos.Count;
+                DineroHoy = registrosHoy.Sum(x => x.Monto);
+                DineroTotal = todos.Sum(x => x.Monto);
+
+                DocumentosTotal = todos.Sum(x => x.Documentos?.Count ?? 0);
+
+                TotalSolicitantes = todos.Select(x => x.SolicitanteId).Distinct().Count();
+
+                UltimosRegistros = todos.OrderByDescending(x => x.FechaEmision).Take(5).ToList();
+            }
+        }
+        catch
+        {
+            UltimosRegistros = new List<ReciboIngreso>();
+        }
+    }
+}

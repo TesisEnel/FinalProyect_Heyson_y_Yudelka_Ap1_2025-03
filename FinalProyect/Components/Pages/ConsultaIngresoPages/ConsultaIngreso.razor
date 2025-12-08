@@ -1,0 +1,180 @@
+﻿@page "/consultaingreso"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@inject ReciboIngresoService IngresoService
+@inject IJSRuntime JS
+
+<div class="fw-bold text-primary mb-4">Consulta de Ingresos</div>
+
+<div class="card shadow p-4">
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Desde</label>
+            <InputDate class="form-control" @bind-Value="FechaInicio" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Hasta</label>
+            <InputDate class="form-control" @bind-Value="FechaFin" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Mes</label>
+            <InputSelect class="form-control" @bind-Value="MesFiltro">
+                <option value="">Todos</option>
+                @foreach (var m in Meses)
+                {
+                    <option value="@m.Value">@m.Key</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-semibold">Descripción</label>
+            <InputText class="form-control" @bind-Value="DescripcionFiltro" />
+        </div>
+
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-primary" @onclick="Filtrar">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+
+        <button class="btn btn-outline-secondary" @onclick="Limpiar">
+            <i class="fas fa-eraser"></i> Limpiar filtros
+        </button>
+
+        <button class="btn btn-success" @onclick="ExportarExcel">
+            <i class="fas fa-file-excel"></i> Excel
+        </button>
+
+        <button class="btn btn-danger" @onclick="ExportarPDF">
+            <i class="fas fa-file-pdf"></i> PDF
+        </button>
+    </div>
+
+    <table class="table table-bordered table-striped text-center">
+        <thead class="table-light">
+            <tr>
+                <th>Fecha</th>
+                <th>Mes</th>
+                <th>Descripción</th>
+                <th>Valor</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (Filtrados.Count == 0)
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">No hay registros</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var r in Filtrados)
+                {
+                    <tr>
+                        <td>@r.FechaEmision.ToString("dd/MM/yyyy")</td>
+                        <td>@r.FechaEmision.ToString("MMMM")</td>
+                        <td>@r.Concepto</td>
+                        <td>RD$ @r.Monto.ToString("N2")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+
+    </table>
+
+    <div class="text-end mt-3">
+        <strong class="fs-5">
+            Monto total:
+            <span class="text-success">RD$ @Filtrados.Sum(x => x.Monto).ToString("N2")</span>
+        </strong>
+    </div>
+</div>
+
+@code {
+
+    private List<ReciboIngreso> Lista = new();
+    private List<ReciboIngreso> Filtrados = new();
+
+    private DateTime? FechaInicio;
+    private DateTime? FechaFin;
+    private string MesFiltro = "";
+    private string DescripcionFiltro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lista = await IngresoService.ObtenerTodos();
+        Filtrados = Lista;
+    }
+
+    private Dictionary<string, string> Meses = new()
+    {
+        { "Enero", "1" },
+        { "Febrero", "2" },
+        { "Marzo", "3" },
+        { "Abril", "4" },
+        { "Mayo", "5" },
+        { "Junio", "6" },
+        { "Julio", "7" },
+        { "Agosto", "8" },
+        { "Septiembre", "9" },
+        { "Octubre", "10" },
+        { "Noviembre", "11" },
+        { "Diciembre", "12" }
+    };
+
+    private void Filtrar()
+    {
+        Filtrados = Lista;
+
+        if (FechaInicio != null)
+            Filtrados = Filtrados.Where(x => x.FechaEmision.Date >= FechaInicio.Value.Date).ToList();
+
+        if (FechaFin != null)
+            Filtrados = Filtrados.Where(x => x.FechaEmision.Date <= FechaFin.Value.Date).ToList();
+
+        if (!string.IsNullOrWhiteSpace(MesFiltro))
+            Filtrados = Filtrados.Where(x => x.FechaEmision.Month.ToString() == MesFiltro).ToList();
+
+        if (!string.IsNullOrWhiteSpace(DescripcionFiltro))
+            Filtrados = Filtrados.Where(x => x.Concepto.Contains(DescripcionFiltro, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    private void Limpiar()
+    {
+        FechaInicio = null;
+        FechaFin = null;
+        MesFiltro = "";
+        DescripcionFiltro = "";
+
+        Filtrados = Lista;
+    }
+
+    private async Task ExportarPDF()
+    {
+        await JS.InvokeVoidAsync("print");
+    }
+
+    private async Task ExportarExcel()
+    {
+        var csv = "Fecha,Mes,Descripcion,Valor\n";
+
+        foreach (var r in Filtrados)
+        {
+            csv += $"{r.FechaEmision:dd/MM/yyyy}," +
+                   $"{r.FechaEmision:MMMM}," +
+                   $"{r.Concepto}," +
+                   $"{r.Monto}\n";
+        }
+
+        await JS.InvokeVoidAsync("downloadFile", "consulta_ingresos.csv", csv);
+    }
+}

@@ -1,0 +1,173 @@
+﻿@page "/arrendamiento/create"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using FinalProyect.Data
+@inject AuthenticationStateProvider AuthProvider
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ArrendamientoTerrenoService ArrendamientoService
+@inject SolicitanteService SolicitanteService
+@inject ReciboIngresoService ReciboService
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthState
+
+<div class="mb-4 text-primary fw-bold">
+    Registrar Arrendamiento de terreno en el cementerio
+</div>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+<div class="card shadow-sm p-4">
+    <EditForm FormName="ArrForm" Model="@Modelo" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @*Datos del solicitante*@
+        <h5 class="text-primary mb-3">Datos del solicitante</h5>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Nombre completo *</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.NombreCompleto" />
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-semibold">Cédula *</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.Cedula" />
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-semibold">Teléfono *</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.Telefono" />
+            </div>
+        </div>
+
+        <hr />
+
+             @*CONTROL DE VENCIMIENTO*@
+        <h5 class="text-primary mb-3">Control de vencimiento del arrendamiento</h5>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Fecha de inicio *</label>
+                <InputDate class="form-control" @bind-Value="Modelo.FechaInicio" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Fecha de vencimiento *</label>
+                <InputDate class="form-control" @bind-Value="Modelo.FechaFin" />
+            </div>
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox id="notificar" class="form-check-input" @bind-Value="Modelo.NotificarVencimiento" />
+            <label class="form-check-label" for="notificar">
+                Recordatorio automático antes del vencimiento
+            </label>
+        </div>
+
+        <hr />
+
+                @*COSTOS*@
+        <h5 class="text-primary mb-3">Información del arrendamiento</h5>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-semibold">Metros cuadrados a arrendar *</label>
+                <InputNumber class="form-control" @bind-Value="Modelo.MetrosCuadrados"
+                             @oninput="CalcularMonto" />
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-semibold">Monto a pagar</label>
+                <input class="form-control" value="@MontoTexto" readonly />
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-semibold">Ubicación</label>
+                <InputText class="form-control" @bind-Value="Modelo.Ubicacion" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">
+            <i class="fas fa-save"></i> Guardar y generar recibo
+        </button>
+
+    </EditForm>
+</div>
+
+@code {
+    private ArrendamientoTerreno Modelo { get; set; } = new();
+    private Solicitante SolicitanteProceso { get; set; } = new();
+
+    private string MontoTexto { get; set; } = "RD$ 0.00";
+
+    private string ErrorMessage = "";
+
+    private void CalcularMonto(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int metros))
+        {
+            Modelo.MetrosCuadrados = metros;
+            var monto = ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, metros);
+            MontoTexto = $"RD$ {monto:N2}";
+        }
+    }
+
+    private async Task<string> GetUserId()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+            return UserManager.GetUserId(user);
+
+        return "";
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            Modelo.UsuarioId = await GetUserId();
+
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(SolicitanteProceso);
+
+            int arrendamientoId = await ArrendamientoService.Crear(Modelo);
+
+            // Calcular monto final para el recibo
+            var monto = ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados);
+
+            var recibo = new ReciboIngreso
+        {
+            Concepto = Modelo.GetConcepto(),
+            Monto = monto,
+            MontoEnLetras = ProcessPrices.GetPriceText(monto),
+            SolicitanteId = Modelo.SolicitanteId,
+            FormaPago = "Efectivo",
+            NumeroRecibo = new Random().Next(1000, 9999).ToString()
+        };
+
+            int reciboId = await ReciboService.Crear(recibo);
+
+            Modelo.Id = arrendamientoId;
+            Modelo.ReciboIngresoId = reciboId;
+
+            await ArrendamientoService.Actualizar(Modelo);
+
+            Nav.NavigateTo($"/recibo/create/{arrendamientoId}/{ProcessType.ArrendamientoTerreno}");
+        } 
+        catch (Exception ex)
+        {
+            ErrorMessage = "Ocurrió un error al guardar el arrendamiento: " + ex.Message;
+            Console.WriteLine(ex);
+        }
+    }
+}

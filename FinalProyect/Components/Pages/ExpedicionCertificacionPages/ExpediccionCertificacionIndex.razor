@@ -1,0 +1,131 @@
+﻿@page "/certificacion"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+
+@inject ExpedicionCertificacionService CertService
+@inject NavigationManager Nav
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h4 mb-0 text-gray-800">Expedición de Certificaciones</h1>
+
+    <button class="btn btn-primary" @onclick="CrearNuevo">
+        <i class="fas fa-plus"></i> Nueva Certificación de Enterramiento
+    </button>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header bg-primary text-white">
+            <strong>Listado de certificaciones</strong>
+        </div>
+
+        <input class="form-control w-25"
+               placeholder="Buscar por solicitante..."
+               @bind="Filtro"
+               @bind:event="oninput" />
+    </div>
+
+    <div class="card-body p-0">
+        @if (Lista == null)
+        {
+            <div class="p-3">Cargando...</div>
+        }
+        else if (ListaFiltrada.Count == 0)
+        {
+            <div class="p-3">No hay certificaciones registradas.</div>
+        }
+        else
+        {
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Solicitante</th>
+                        <th>Cédula</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Fecha solicitud</th>
+                        <th>Fecha emisión</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ListaFiltrada)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.NombreSolicitante</td>
+                            <td>@item.Cedula</td>
+                            <td>@item.TipoCertificacion</td>
+                            <td>
+                                @if (item.Estado == "Emitida")
+                                {
+                                    <span class="badge bg-success">Emitida</span>
+                                }
+                                else if (item.Estado == "Pendiente")
+                                {
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@item.Estado</span>
+                                }
+                            </td>
+                            <td>@item.FechaSolicitud.ToString("dd/MM/yyyy")</td>
+                            <td>@(item.FechaEmision?.ToString("dd/MM/yyyy") ?? "—")</td>
+
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <button class="btn btn-info btn-sm me-1" @onclick="() => Ver(item.Id)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+
+                                    <button class="btn btn-warning btn-sm me-1" @onclick="() => Editar(item.Id)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <button class="btn btn-success btn-sm me-1" @onclick="() => GenerarRecibo(item.Id)">
+                                        <i class="fas fa-receipt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<ExpedicionCertificacion>? Lista;
+    private string Filtro = string.Empty;
+
+    private List<ExpedicionCertificacion> ListaFiltrada =>
+        string.IsNullOrWhiteSpace(Filtro)
+            ? (Lista ?? new())
+            : Lista!
+                .Where(x =>
+                    (!string.IsNullOrWhiteSpace(x.NombreSolicitante) &&
+                     x.NombreSolicitante.Contains(Filtro, StringComparison.OrdinalIgnoreCase))
+                    || (!string.IsNullOrWhiteSpace(x.Cedula) &&
+                        x.Cedula.Contains(Filtro, StringComparison.OrdinalIgnoreCase))
+                    || (!string.IsNullOrWhiteSpace(x.TipoCertificacion) &&
+                        x.TipoCertificacion.Contains(Filtro, StringComparison.OrdinalIgnoreCase))
+                )
+                .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lista = await CertService.ObtenerTodos();
+    }
+
+    private void CrearNuevo() => Nav.NavigateTo("/certificacion/create");
+    private void Ver(int id) => Nav.NavigateTo($"/certificacion/details/{id}");
+    private void Editar(int id) => Nav.NavigateTo($"/certificacion/edit/{id}");
+    private void GenerarRecibo(int id) => Nav.NavigateTo($"/recibo/create/{id}/ExpedicionCertificacion");
+    private void Imprimir(int id) => Nav.NavigateTo($"/certificacion/print/{id}");
+}

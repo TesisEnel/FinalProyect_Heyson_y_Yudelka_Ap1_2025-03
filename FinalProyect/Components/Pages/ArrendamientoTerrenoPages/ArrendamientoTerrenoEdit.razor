@@ -1,0 +1,111 @@
+﻿@page "/arrendamiento/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@inject ArrendamientoTerrenoService ArrService
+@inject SolicitanteService SolicitanteService
+@inject NavigationManager Nav
+
+<h3 class="text-primary mb-4">Editar Arrendamiento de Terreno</h3>
+
+@if (Modelo == null)
+{
+    <div class="alert alert-warning">Cargando...</div>
+    return;
+}
+
+<div class="card shadow-sm p-4">
+
+    <EditForm Model="@Modelo" OnValidSubmit="Guardar" FormName="ArrEditForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- SOLICITANTE -->
+        <h5 class="text-primary mb-3">Datos del Solicitante</h5>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre completo</label>
+            <InputText class="form-control" @bind-Value="Modelo.Solicitante.NombreCompleto"/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Cédula</label>
+            <InputText class="form-control" @bind-Value="Modelo.Solicitante.Cedula"/>
+        </div>
+
+        <hr />
+
+        <!-- DATOS DEL ARRENDAMIENTO -->
+        <h5 class="text-primary mb-3">Datos del Arrendamiento</h5>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Fecha de inicio</label>
+                <InputDate class="form-control" @bind-Value="Modelo.FechaInicio" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Fecha de vencimiento</label>
+                <InputDate class="form-control" @bind-Value="Modelo.FechaFin" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Metros cuadrados</label>
+            <InputNumber class="form-control" @bind-Value="Modelo.MetrosCuadrados" @oninput="(e => OnMetrosChanged(e))" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a pagar</label>
+            <input class="form-control"
+                   value="RD$ @ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados).ToString("N2")"
+                   readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Ubicación del terreno</label>
+            <InputText class="form-control" @bind-Value="Modelo.Ubicacion" />
+        </div>
+
+        <div class="form-check mb-3">
+            <InputCheckbox class="form-check-input" @bind-Value="Modelo.NotificarVencimiento" />
+            <label class="form-check-label">Notificar cuando esté próximo a vencer</label>
+        </div>
+
+        <button class="btn btn-primary mt-3" type="submit">
+            <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+
+        <button class="btn btn-secondary mt-3 ms-2" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    ArrendamientoTerreno? Modelo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await ArrService.ObtenerPorId(Id);
+    }
+
+    private void OnMetrosChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int metros))
+        {
+            Modelo.MetrosCuadrados = metros;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Guardar()
+    {
+        await ArrService.Actualizar(Modelo!);
+        Nav.NavigateTo("/arrendamiento");
+    }
+
+    private void Volver() => Nav.NavigateTo("/arrendamiento");
+}

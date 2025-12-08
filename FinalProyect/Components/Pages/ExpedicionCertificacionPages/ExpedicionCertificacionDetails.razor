@@ -1,0 +1,147 @@
+﻿@page "/certificacion/details/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+
+@inject ExpedicionCertificacionService CertService
+@inject NavigationManager Nav
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 text-gray-800">Detalles de la Certificación</h1>
+    </div>
+
+    @if (Modelo == null)
+    {
+        <div class="alert alert-danger">No se encontró la certificación.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Información General</h5>
+            </div>
+
+            <div class="card-body">
+
+                <h6 class="text-primary fw-bold">Solicitante</h6>
+
+                <p><strong>Nombre:</strong> @Modelo.NombreSolicitante</p>
+                <p><strong>Cédula:</strong> @Modelo.Cedula</p>
+                <p><strong>Teléfono:</strong> @Modelo.Telefono</p>
+
+                <hr />
+
+                <h6 class="text-primary fw-bold">Datos del Fallecido</h6>
+
+                <p><strong>Información:</strong> @Modelo.Contenido</p>
+
+                <hr />
+
+                <h6 class="text-primary fw-bold">Información del Proceso</h6>
+
+                <p><strong>Estado:</strong> @Modelo.Estado</p>
+                <p><strong>Fecha Solicitud:</strong> @Modelo.FechaSolicitud.ToString("dd/MM/yyyy")</p>
+                <p><strong>Fecha Emisión:</strong> @(Modelo.FechaEmision?.ToString("dd/MM/yyyy") ?? "—")</p>
+
+                <hr />
+
+                <h6 class="text-primary fw-bold">Documentos Adjuntos</h6>
+
+                <div class="row">
+                    @DocumentCard("Carta Firmada", DocumentType.CartaFirmada)
+                    @DocumentCard("Recibo Sellado", DocumentType.FotoReciboSellado)
+                </div>
+
+                <hr />
+
+                <button class="btn btn-warning me-2"
+                        @onclick="@(() => Editar(Modelo.Id))">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+
+                <button class="btn btn-secondary" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ExpedicionCertificacion? Modelo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await CertService.ObtenerPorId(Id);
+    }
+
+    private void Volver() => Nav.NavigateTo("/certificacion");
+    private void Editar(int id) => Nav.NavigateTo($"/certificacion/edit/{id}");
+
+    private RenderFragment DocumentCard(string titulo, DocumentType tipo) => __builder =>
+    {
+        Documento? doc = null;
+
+        doc = Modelo?.Documentos?.FirstOrDefault(d => d.TipoDocumento == tipo);
+
+        if (doc == null && tipo == DocumentType.FotoReciboSellado)
+        {
+            doc = Modelo?.ReciboIngreso?.Documentos?
+                .FirstOrDefault(d => d.TipoDocumento == DocumentType.FotoReciboSellado);
+        }
+
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "col-md-3 mb-3");
+
+        __builder.OpenElement(2, "div");
+        __builder.AddAttribute(3, "class", "card shadow-sm text-center p-2");
+
+        __builder.OpenElement(4, "h6");
+        __builder.AddContent(5, titulo);
+        __builder.CloseElement();
+
+        if (doc == null)
+        {
+            __builder.OpenElement(6, "div");
+            __builder.AddAttribute(7, "class", "text-muted small");
+            __builder.AddContent(8, "No disponible");
+            __builder.CloseElement();
+        }
+        else
+        {
+            if (doc.Extension.ToLower().Contains("pdf"))
+            {
+                __builder.OpenElement(9, "img");
+                __builder.AddAttribute(10, "src", "_content/FinalProyect/pdf_icon.png");
+                __builder.AddAttribute(11, "class", "img-thumbnail mb-2");
+                __builder.AddAttribute(12, "style", "height:80px; object-fit:contain;");
+                __builder.CloseElement();
+            }
+            else
+            {
+                __builder.OpenElement(13, "img");
+                __builder.AddAttribute(14, "src", doc.BlobUrl);
+                __builder.AddAttribute(15, "class", "img-thumbnail mb-2");
+                __builder.AddAttribute(16, "style", "height:80px; object-fit:cover;");
+                __builder.CloseElement();
+            }
+
+            __builder.OpenElement(17, "a");
+            __builder.AddAttribute(18, "href", doc.BlobUrl);
+            __builder.AddAttribute(19, "target", "_blank");
+            __builder.AddAttribute(20, "class", "btn btn-primary btn-sm");
+            __builder.AddContent(21, "Ver documento");
+            __builder.CloseElement();
+        }
+
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+}

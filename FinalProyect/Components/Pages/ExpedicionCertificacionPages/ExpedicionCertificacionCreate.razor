@@ -1,0 +1,142 @@
+﻿@page "/certificacion/create"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Identity
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ExpedicionCertificacionService CertService
+@inject ReciboIngresoService ReciboIngresoService
+@inject SolicitanteService SolicitanteService
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="text-primary fw-bold mb-4">Nueva Certificación de Enterramiento</div>
+
+<div class="card shadow p-4">
+
+    <EditForm FormName="CrearCertForm" Model="@Modelo" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="text-primary mb-3">Datos del Solicitante</div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre completo *</label>
+            <InputText class="form-control" @bind-Value="Modelo.NombreSolicitante" />
+            <ValidationMessage For="@(() => Modelo.NombreSolicitante)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Cédula *</label>
+            <InputText class="form-control" @bind-Value="Modelo.Cedula" />
+            <ValidationMessage For="@(() => Modelo.Cedula)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Teléfono</label>
+            <InputText class="form-control" @bind-Value="Modelo.Telefono" />
+        </div>
+
+        <hr />
+
+        <div class="text-primary mb-3">Datos del Fallecido</div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre del fallecido *</label>
+            <InputText class="form-control" @bind-Value="NombreFallecido" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Cédula del fallecido *</label>
+            <InputText class="form-control" @bind-Value="CedulaFallecido" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Fecha de fallecimiento *</label>
+            <InputDate class="form-control" @bind-Value="FechaFallecimiento" />
+        </div>
+
+        <hr />
+
+        <button class="btn btn-success">
+            <i class="fas fa-save"></i> Guardar y generar recibo
+        </button>
+
+    </EditForm>
+
+</div>
+
+
+@code {
+
+    private ExpedicionCertificacion Modelo { get; set; } = new();
+
+
+    private string NombreFallecido { get; set; } = "";
+    private string CedulaFallecido { get; set; } = "";
+    private DateTime FechaFallecimiento { get; set; } = DateTime.Today;
+
+    private async Task<string> GetUserId()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+            return UserManager.GetUserId(user);
+
+        return "";
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            Modelo.UsuarioId = await GetUserId();
+
+            var solicitante = new Solicitante
+            {
+                NombreCompleto = Modelo.NombreSolicitante,
+                Cedula = Modelo.Cedula,
+                Telefono = Modelo.Telefono
+            };
+
+            Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(solicitante);
+
+            Modelo.TipoCertificacion = "Certificación de Enterramiento";
+            Modelo.FechaSolicitud = DateTime.Now;
+
+            Modelo.Contenido =
+                $"{NombreFallecido}, cédula {CedulaFallecido}, falleció el {FechaFallecimiento:dd/MM/yyyy}.";
+
+            int certificacionId = await CertService.Crear(Modelo);
+
+            var monto = ProcessPrices.GetPrice(ProcessType.ExpedicionCertificacion);
+            var concepto = ExpedicionCertificacion.Concepto;
+            var recibo = new ReciboIngreso
+            {
+                Monto = monto,
+                MontoEnLetras = ProcessPrices.GetPriceText((int)monto),
+                SolicitanteId = Modelo.SolicitanteId,
+                FormaPago = "Efectivo",
+                NumeroRecibo = new Random().Next(1000, 9999).ToString()
+            };
+
+            int reciboId = await ReciboIngresoService.Crear(recibo);
+
+            Modelo.Id = certificacionId;
+            Modelo.ReciboIngresoId = reciboId;
+
+            await CertService.Actualizar(Modelo);
+
+            Nav.NavigateTo($"/certificacion/carta/{certificacionId}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERROR: " + ex.Message);
+        }
+    }
+}

@@ -1,0 +1,359 @@
+﻿@page "/enterramiento/create"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject DerechoEnterramientoService EnterramientoService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthProvider
+
+<style>
+    :root {
+        --navy-dark: #171840;
+        --navy-light: #232452;
+        --teal-accent: #2c7da0;
+    }
+
+    .form-control {
+        border: 1px solid #b0b0ce !important;
+        background-color: #f8f9fa;
+        padding-left: 10px;
+    }
+
+        .form-control:focus {
+            border-color: var(--teal-accent) !important;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.15) !important;
+        }
+
+    .input-group-text {
+        background-color: #e9ecef;
+        border: 1px solid #b0b0ce;
+        color: var(--navy-dark);
+    }
+
+    .section-title {
+        color: var(--navy-dark);
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    .file-upload-box {
+        border: 2px dashed #b0b0ce;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s;
+        background-color: #fff;
+    }
+
+        .file-upload-box:hover {
+            border-color: var(--teal-accent);
+            background-color: #f0f8ff;
+        }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+
+            <div class="card shadow-lg border-0 rounded-3">
+
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1 d-flex align-items-center justify-content-center"
+                         style="background-image: linear-gradient(195deg, #171840 0%, #4b5d67 100%); box-shadow: 0 4px 20px 0 rgba(0,0,0,0.14), 0 7px 10px -5px rgba(23, 24, 64, 0.4);">
+                        <i class="fas fa-cross text-white fs-2 me-3"></i>
+                        <h4 class="text-white font-weight-bolder text-center mb-0">Derecho a Enterramiento</h4>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+
+                    @if (!string.IsNullOrWhiteSpace(ErrorGlobal))
+                    {
+                        <div class="alert alert-danger text-white mb-4 d-flex align-items-center" role="alert" style="background-image: linear-gradient(195deg, #EF5350 0%, #E53935 100%);">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <div>@ErrorGlobal</div>
+                        </div>
+                    }
+
+                    <div class="section-title mt-2">
+                        <i class="fas fa-user-edit me-2"></i> Datos del Solicitante
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <label class="form-label fw-bold text-secondary text-xs">Nombre Completo</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input class="form-control form-control-lg" placeholder="Ej. Juan Pérez" @bind="SolicitanteProceso.NombreCompleto" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-secondary text-xs">Cédula de Identidad</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input class="form-control" placeholder="000-0000000-0" @bind="SolicitanteProceso.Cedula" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold text-secondary text-xs">Teléfono / Celular</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                <input class="form-control" placeholder="(809) 000-0000" @bind="SolicitanteProceso.Telefono" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">
+                        <i class="fas fa-file-upload me-2"></i> Documentación Requerida
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="file-upload-box">
+                                <i class="fas fa-id-badge fs-2 text-secondary mb-2"></i>
+                                <label class="d-block fw-bold small text-muted mb-2">Cédula Solicitante *</label>
+                                <InputFile OnChange="OnCedulaSolicitanteSelected" class="form-control form-control-sm" />
+                                <div class="text-danger mt-1 text-xs fw-bold">@ErrorCedulaSolicitante</div>
+                                @if (CedulaSolicitanteFile != null)
+                                {
+                                    <div class="text-success text-xs mt-1"><i class="fas fa-check"></i> Cargado</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <div class="file-upload-box">
+                                <i class="fas fa-user-slash fs-2 text-secondary mb-2"></i>
+                                <label class="d-block fw-bold small text-muted mb-2">Cédula Fallecido *</label>
+                                <InputFile OnChange="OnCedulaFallecidoSelected" class="form-control form-control-sm" />
+                                <div class="text-danger mt-1 text-xs fw-bold">@ErrorCedulaFallecido</div>
+                                @if (CedulaFallecidoFile != null)
+                                {
+                                    <div class="text-success text-xs mt-1"><i class="fas fa-check"></i> Cargado</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <div class="file-upload-box">
+                                <i class="fas fa-file-medical fs-2 text-secondary mb-2"></i>
+                                <label class="d-block fw-bold small text-muted mb-2">Acta Defunción *</label>
+                                <InputFile OnChange="OnActaDefuncionSelected" class="form-control form-control-sm" />
+                                <div class="text-danger mt-1 text-xs fw-bold">@ErrorActa</div>
+                                @if (ActaDefuncionFile != null)
+                                {
+                                    <div class="text-success text-xs mt-1"><i class="fas fa-check"></i> Cargado</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">
+                        <i class="fas fa-church me-2"></i> Datos del Fallecido
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7 mb-4">
+                            <label class="form-label fw-bold text-secondary text-xs">Nombre del Fallecido</label>
+                            <input class="form-control" placeholder="Nombre completo" @bind="Modelo.NombreFallecido" />
+                        </div>
+                        <div class="col-md-5 mb-4">
+                            <label class="form-label fw-bold text-secondary text-xs">Cédula del Fallecido</label>
+                            <input class="form-control" placeholder="000-0000000-0" @bind="Modelo.CedulaFallecido" />
+                        </div>
+                    </div>
+
+                    <div class="p-3 mb-4 rounded bg-light border">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label class="fw-bold text-secondary text-xs mb-1">Fecha de Registro</label>
+                                <div class="input-group input-group-static">
+                                    <span class="input-group-text border-0 bg-transparent ps-0"><i class="fas fa-calendar-alt"></i></span>
+                                    <InputDate class="form-control fw-bold" @bind-Value="Modelo.Fecha" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold text-secondary text-xs mb-1">Hora de Registro</label>
+                                <div class="input-group input-group-static">
+                                    <span class="input-group-text border-0 bg-transparent ps-0"><i class="fas fa-clock"></i></span>
+                                    <input class="form-control fw-bold" @bind="HoraTexto" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="/" class="btn btn-outline-secondary me-3">Cancelar</a>
+                        <button class="btn btn-lg text-white shadow-lg px-5"
+                                style="background-color: #171840; border-radius: 30px;"
+                                @onclick="Guardar"
+                                disabled="@(!FormularioListo)">
+                            <i class="fas fa-save me-2"></i> Guardar y Generar Recibo
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    DerechoEnterramiento Modelo { get; set; } = new();
+    Solicitante SolicitanteProceso { get; set; } = new();
+
+    IBrowserFile? CedulaSolicitanteFile;
+    IBrowserFile? CedulaFallecidoFile;
+    IBrowserFile? ActaDefuncionFile;
+
+    string ErrorCedulaSolicitante = "";
+    string ErrorCedulaFallecido = "";
+    string ErrorActa = "";
+    string ErrorGlobal = "";
+
+    string HoraTexto { get; set; } = DateTime.Now.ToString("HH:mm");
+
+    string[] Permitidos = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+
+    private bool FormularioListo =>
+        !string.IsNullOrWhiteSpace(SolicitanteProceso.NombreCompleto) &&
+        !string.IsNullOrWhiteSpace(SolicitanteProceso.Cedula) &&
+        !string.IsNullOrWhiteSpace(SolicitanteProceso.Telefono) &&
+        CedulaSolicitanteFile != null &&
+        CedulaFallecidoFile != null &&
+        ActaDefuncionFile != null &&
+        !string.IsNullOrWhiteSpace(Modelo.NombreFallecido) &&
+        !string.IsNullOrWhiteSpace(Modelo.CedulaFallecido);
+
+    protected override void OnInitialized()
+    {
+        Modelo.Fecha = DateTime.Now.Date;
+    }
+
+    private IBrowserFile? ValidarArchivo(IBrowserFile file, ref string errorOut)
+    {
+        var ext = Path.GetExtension(file.Name).ToLower();
+
+        if (!Permitidos.Contains(ext))
+        {
+            errorOut = "Solo PDF o imágenes (jpg, jpeg, png).";
+            return null;
+        }
+
+        if (file.Size > 10 * 1024 * 1024)
+        {
+            errorOut = "Máximo permitido: 10MB.";
+            return null;
+        }
+
+        return file;
+    }
+
+    void OnCedulaSolicitanteSelected(InputFileChangeEventArgs e)
+    {
+        ErrorCedulaSolicitante = "";
+        CedulaSolicitanteFile = ValidarArchivo(e.File, ref ErrorCedulaSolicitante);
+    }
+
+    void OnCedulaFallecidoSelected(InputFileChangeEventArgs e)
+    {
+        ErrorCedulaFallecido = "";
+        CedulaFallecidoFile = ValidarArchivo(e.File, ref ErrorCedulaFallecido);
+    }
+
+    void OnActaDefuncionSelected(InputFileChangeEventArgs e)
+    {
+        ErrorActa = "";
+        ActaDefuncionFile = ValidarArchivo(e.File, ref ErrorActa);
+    }
+
+    private async Task<string> GetUserId()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        return UserManager.GetUserId(auth.User) ?? "";
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            ErrorGlobal = "";
+
+            Modelo.UsuarioId = await GetUserId();
+            Modelo.Hora = TimeSpan.ParseExact(HoraTexto, "hh\\:mm", null);
+
+            var existente = await SolicitanteService.BuscarPorCedula(SolicitanteProceso.Cedula);
+
+            if (existente != null)
+            {
+                Modelo.SolicitanteId = existente.Id;
+            }
+            else
+            {
+                bool creado = await SolicitanteService.Crear(SolicitanteProceso);
+                if (!creado)
+                {
+                    ErrorGlobal = "No se pudo registrar el solicitante.";
+                    return;
+                }
+                Modelo.SolicitanteId = SolicitanteProceso.Id;
+            }
+
+            int id = await EnterramientoService.Crear(Modelo);
+
+            if (CedulaSolicitanteFile != null)
+            {
+                using var st = CedulaSolicitanteFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    CedulaSolicitanteFile.Name,
+                    DocumentType.CedulaSolicitante,
+                    enterramientoId: id
+                );
+            }
+
+            if (CedulaFallecidoFile != null)
+            {
+                using var st = CedulaFallecidoFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    CedulaFallecidoFile.Name,
+                    DocumentType.CedulaFallecido,
+                    enterramientoId: id
+                );
+            }
+
+            if (ActaDefuncionFile != null)
+            {
+                using var st = ActaDefuncionFile.OpenReadStream(long.MaxValue);
+                await DocumentoService.SubirDocumentoAsync(
+                    st,
+                    ActaDefuncionFile.Name,
+                    DocumentType.ActaDefuncion,
+                    enterramientoId: id
+                );
+            }
+
+            Nav.NavigateTo($"/recibo/create/{id}/{ProcessType.DerechoEnterramiento}");
+        }
+        catch (Exception ex)
+        {
+            ErrorGlobal = ex.InnerException?.Message ?? ex.Message;
+        }
+    }
+}

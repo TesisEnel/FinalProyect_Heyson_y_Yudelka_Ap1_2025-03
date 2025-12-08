@@ -1,0 +1,195 @@
+﻿@page "/registrodocumentacion/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using FinalProyect.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject RegistroDocumentacionService RegistroService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject BlobStorageService BlobService
+@inject NavigationManager Nav
+
+<div class="text-primary fw-bold mb-3">Editar Registro de Documentación</div>
+
+@if (!string.IsNullOrWhiteSpace(Error))
+{
+    <div class="alert alert-danger">@Error</div>
+}
+
+@if (Modelo == null)
+{
+    <div>Cargando...</div>
+}
+else
+{
+    <div class="card shadow p-4">
+
+        <EditForm FormName="EditRegistroDocForm" Model="@Modelo" OnValidSubmit="Guardar">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="text-primary mb-3">Datos del Solicitante</div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre completo *</label>
+                <InputText class="form-control" @bind-Value="Modelo.NombreCompleto" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cédula *</label>
+                <InputText class="form-control" @bind-Value="Modelo.Cedula" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <InputText class="form-control" @bind-Value="Modelo.Telefono" />
+            </div>
+
+            <hr />
+
+            <div class="text-primary mb-3">Tipo de Documentación</div>
+
+            <div class="mb-3">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tipo *</label>
+                    <InputSelect class="form-control" @bind-Value="Modelo.TipoDocumentacion">
+                        <option value="">Seleccione un tipo</option>
+                        <option value="Actos de partición">Actos de partición</option>
+                        <option value="Facturas comerciales">Facturas comerciales</option>
+                        <option value="Actos de nulidad">Actos de nulidad</option>
+                        <option value="Pagaré notario">Pagaré notario</option>
+                        <option value="Actos de notoriedad">Actos de notoriedad</option>
+                        <option value="Actos de Desistimiento">Actos de Desistimiento</option>
+                        <option value="Actos de Cancelación de Hipotecas">Actos de Cancelación de Hipotecas</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Modelo.TipoDocumentacion)" />
+                </div>
+
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Comentarios u observaciones</label>
+                <InputTextArea class="form-control" @bind-Value="Modelo.Comentarios" />
+            </div>
+
+            <hr />
+
+            <h5 class="text-primary mb-3">Recibo del Colegio de Notarios</h5>
+
+            @if (ReciboNotariosDoc != null)
+            {
+                <div class="mb-3 text-center">
+
+                    <strong>Archivo actual:</strong><br />
+
+                    @if (ReciboNotariosDoc.Extension.ToLower().Contains("pdf"))
+                    {
+                        <img src="_content/FinalProyect/pdf_icon.png"
+                             class="img-thumbnail mb-2"
+                             style="height:80px;" />
+                    }
+                    else
+                    {
+                        <img src="@ReciboNotariosDoc.BlobUrl"
+                             class="img-thumbnail mb-2"
+                             style="max-width:200px;object-fit:cover;" />
+                    }
+
+                    <br />
+
+                    <a href="@ReciboNotariosDoc.BlobUrl" target="_blank" class="btn btn-primary btn-sm">
+                        Ver documento
+                    </a>
+                </div>
+
+                <div class="alert alert-secondary text-center">
+                    Si sube un nuevo archivo, reemplazará al existente.
+                </div>
+            }
+
+            <div class="mb-3">
+                <InputFile OnChange="OnReciboSelected" class="form-control" />
+            </div>
+
+            <hr />
+
+            <!-- BOTONES -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar cambios
+                </button>
+
+                <button class="btn btn-secondary" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private RegistroDocumentacion? Modelo;
+    private Documento? ReciboNotariosDoc;
+    private IBrowserFile? ReciboFile;
+    private string Error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await RegistroService.ObtenerPorId(Id);
+
+        if (Modelo != null)
+        {
+            ReciboNotariosDoc = Modelo.Documentos?
+                .FirstOrDefault(d => d.TipoDocumento == DocumentType.ReciboColegioNotarios);
+        }
+    }
+
+    private void OnReciboSelected(InputFileChangeEventArgs e)
+    {
+        ReciboFile = e.File;
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            if (ReciboFile != null)
+            {
+                using var st = ReciboFile.OpenReadStream(long.MaxValue);
+                var url = await BlobService.UploadFileAsync(st, ReciboFile.Name);
+
+                var doc = new Documento
+                {
+                    NombreArchivo = ReciboFile.Name,
+                    BlobUrl = url,
+                    Extension = Path.GetExtension(ReciboFile.Name),
+                    TipoDocumento = DocumentType.ReciboColegioNotarios,
+                    RegistroDocumentacionId = Modelo!.Id,
+                    FechaSubida = DateTime.Now
+                };
+
+                await DocumentoService.Crear(doc);
+
+                ReciboNotariosDoc = doc;
+            }
+
+            await RegistroService.Actualizar(Modelo!);
+
+            Nav.NavigateTo("/registrodocumentacion");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error guardando: " + ex.Message);
+        }
+    }
+    private void Volver() => Nav.NavigateTo("/registrodocumentacion");
+}

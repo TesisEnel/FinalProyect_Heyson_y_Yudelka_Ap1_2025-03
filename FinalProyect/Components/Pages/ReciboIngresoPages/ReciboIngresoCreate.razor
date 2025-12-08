@@ -1,0 +1,364 @@
+﻿@page "/recibo/create/{ProcesoId:int}/{TipoProceso}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject DerechoEnterramientoService EnterramientoService
+@inject ArrendamientoTerrenoService TerrenoService
+@inject DerechoConstruccionService ConstruccionService
+@inject ExpedicionCertificacionService CertificacionService
+@inject RegistroDocumentacionService RegistroDocService
+
+@inject ReciboIngresoService ReciboService
+@inject DocumentoService DocumentoService
+@inject BlobStorageService BlobService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 text-gray-800">Recibo de Ingresos</h1>
+
+        <button class="btn btn-secondary" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Error))
+    {
+        <div class="alert alert-danger">@Error</div>
+    }
+
+    @if (SolicitanteProceso == null)
+    {
+        <div class="alert alert-warning">No se pudo cargar la información del solicitante.</div>
+    }
+    else
+    {
+        <div class="row">
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Datos del Solicitante</strong>
+                    </div>
+
+                    <div class="card-body">
+                        <p><strong>Nombre:</strong> @SolicitanteProceso.NombreCompleto</p>
+                        <p><strong>Cédula:</strong> @SolicitanteProceso.Cedula</p>
+                        <p><strong>Teléfono:</strong> @SolicitanteProceso.Telefono</p>
+
+                        <hr />
+
+                        <p><strong>Proceso:</strong> @TipoProceso</p>
+
+                        @if (!view && !ReciboGuardado)
+                        {
+                            <button class="btn btn-success w-100" @onclick="GuardarRecibo">
+                                <i class="fas fa-save"></i> Guardar y generar recibo
+                            </button>
+                        }
+
+                        @if (!view && ReciboGuardado)
+                        {
+                            <button class="btn btn-primary w-100 mt-2" @onclick="ImprimirRecibo">
+                                🖨️ Imprimir Recibo
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div id="reciboSection">
+
+                        <div class="card-header bg-dark text-white text-center">
+                            <strong>RECIBO DE INGRESOS</strong>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="row text-center mb-4">
+                                <div class="col-4">
+                                    <strong>Día</strong>
+                                    <div>@DateTime.Now.ToString("dd")</div>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Mes</strong>
+                                    <div>@DateTime.Now.ToString("MM")</div>
+                                </div>
+                                <div class="col-4">
+                                    <strong>Año</strong>
+                                    <div>@DateTime.Now.ToString("yyyy")</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>No. Recibo:</strong>
+                                <div class="border p-2">@Modelo.NumeroRecibo</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>He recibido de:</strong>
+                                <div class="border p-2">@SolicitanteProceso.NombreCompleto</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>La suma de:</strong>
+                                <div class="border p-2">@Modelo.MontoEnLetras</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>RD$</strong>
+                                <div class="border p-2">@Modelo.Monto</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>Forma de pago:</strong>
+                                <div class="border p-2">@Modelo.FormaPago</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>Por concepto de:</strong>
+                                <div class="border p-2">@Modelo.Concepto</div>
+                            </div>
+
+                            <div style="height: 120px;"></div>
+
+                            <div class="text-center mt-4">
+                                <strong>LIC. LUZ ATHANY UREÑA MERCEDES</strong><br />
+                                Tesorera Municipal
+                            </div>
+
+                            @if (Modelo.Documentos != null &&
+                                                    Modelo.Documentos.Any(d => d.TipoDocumento == DocumentType.FotoReciboSellado))
+                            {
+                                var foto = Modelo.Documentos
+                                .First(d => d.TipoDocumento == DocumentType.FotoReciboSellado);
+
+                                <div class="mt-4 text-center">
+                                    <strong>Foto del recibo sellado:</strong>
+                                    <br />
+                                    <img src="@foto.BlobUrl"
+                                         class="img-fluid rounded shadow"
+                                         style="max-width: 300px;" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    @if (!view && ReciboGuardado)
+                    {
+                        <h5 class="text-primary mt-3">Subir foto del recibo sellado</h5>
+
+                        <InputFile OnChange="OnFotoSeleccionada" />
+
+                        <button class="btn btn-info mt-3" @onclick="SubirFotoSellado">
+                            <i class="fas fa-upload"></i> Guardar foto
+                        </button>
+                    }
+                </div>
+            </div>
+
+        </div>
+    }
+</div>
+
+
+@code {
+
+    [Parameter] public int ProcesoId { get; set; }
+    [Parameter] public string TipoProceso { get; set; } = "";
+
+    [SupplyParameterFromQuery]
+    public bool view { get; set; }
+
+    private ProcessType TipoEnum;
+
+    private ReciboIngreso Modelo = new();
+    private Solicitante? SolicitanteProceso;
+
+    private IBrowserFile? FotoSellado;
+    private bool ReciboGuardado = false;
+    private string Error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Enum.TryParse(TipoProceso, true, out TipoEnum))
+        {
+            Error = "Tipo de proceso inválido.";
+            return;
+        }
+
+        await CargarProceso();
+
+        if (SolicitanteProceso == null)
+        {
+            Error = "No se encontró el solicitante.";
+            return;
+        }
+
+        if (view)
+        {
+            ReciboGuardado = Modelo.Id > 0;
+            return;
+        }
+
+        if (Modelo.Id > 0)
+        {
+            ReciboGuardado = true;
+            return;
+        }
+
+        PrepararModelo();
+    }
+
+    private async Task CargarProceso()
+    {
+        dynamic? proceso = TipoEnum switch
+        {
+            ProcessType.DerechoEnterramiento => await EnterramientoService.ObtenerPorId(ProcesoId),
+            ProcessType.ArrendamientoTerreno => await TerrenoService.ObtenerPorId(ProcesoId),
+            ProcessType.DerechoConstruccion => await ConstruccionService.ObtenerPorId(ProcesoId),
+            ProcessType.ExpedicionCertificacion => await CertificacionService.ObtenerPorId(ProcesoId),
+            ProcessType.RegistroDocumentacion => await RegistroDocService.ObtenerPorId(ProcesoId),
+            _ => null
+        };
+
+        if (proceso == null)
+            return;
+
+        SolicitanteProceso = proceso.Solicitante;
+
+        if (proceso.ReciboIngreso != null)
+        {
+            Modelo = await ReciboService.ObtenerPorIdConDocumentos((int)proceso.ReciboIngresoId);
+            ReciboGuardado = true;
+        }
+    }
+
+    private void PrepararModelo()
+    {
+        Modelo.SolicitanteId = SolicitanteProceso!.Id;
+        Modelo.FormaPago = "Efectivo";
+        Modelo.NumeroRecibo = new Random().Next(1000, 9999).ToString();
+
+        Modelo.Concepto = TipoEnum switch
+        {
+            ProcessType.DerechoEnterramiento => "Derecho a Enterramiento",
+            ProcessType.ArrendamientoTerreno => "Arrendamiento de Terreno",
+            ProcessType.DerechoConstruccion => "Derecho de Construcción",
+            ProcessType.ExpedicionCertificacion => "Expedición de Certificación",
+            ProcessType.RegistroDocumentacion => "Registro de Documentación",
+            _ => "Proceso"
+        };
+
+        Modelo.Monto = ProcessPrices.GetPrice(TipoEnum);
+        Modelo.MontoEnLetras = ProcessPrices.GetPriceText((int)Modelo.Monto);
+    }
+
+    private async Task GuardarRecibo()
+    {
+        if (Modelo.Id == 0)
+        {
+            Modelo.Id = await ReciboService.Crear(Modelo);
+            await VincularReciboAlProceso();
+        }
+
+        ReciboGuardado = true;
+    }
+
+    private async Task VincularReciboAlProceso()
+    {
+        switch (TipoEnum)
+        {
+            case ProcessType.DerechoEnterramiento:
+                var e = await EnterramientoService.ObtenerPorId(ProcesoId);
+                e!.ReciboIngresoId = Modelo.Id;
+                await EnterramientoService.Actualizar(e);
+                break;
+
+            case ProcessType.ArrendamientoTerreno:
+                var t = await TerrenoService.ObtenerPorId(ProcesoId);
+                t!.ReciboIngresoId = Modelo.Id;
+                await TerrenoService.Actualizar(t);
+                break;
+
+            case ProcessType.DerechoConstruccion:
+                var c = await ConstruccionService.ObtenerPorId(ProcesoId);
+                c!.ReciboIngresoId = Modelo.Id;
+                await ConstruccionService.Actualizar(c);
+                break;
+
+            case ProcessType.ExpedicionCertificacion:
+                var ex = await CertificacionService.ObtenerPorId(ProcesoId);
+                ex!.ReciboIngresoId = Modelo.Id;
+                await CertificacionService.Actualizar(ex);
+                break;
+
+            case ProcessType.RegistroDocumentacion:
+                var r = await RegistroDocService.ObtenerPorId(ProcesoId);
+                r!.ReciboIngresoId = Modelo.Id;
+                await RegistroDocService.Actualizar(r);
+                break;
+        }
+    }
+
+    private void OnFotoSeleccionada(InputFileChangeEventArgs e)
+        => FotoSellado = e.File;
+
+    private async Task SubirFotoSellado()
+    {
+        if (FotoSellado == null)
+        {
+            Error = "Debe seleccionar una foto.";
+            return;
+        }
+
+        using var st = FotoSellado.OpenReadStream(long.MaxValue);
+
+        var url = await BlobService.UploadFileAsync(st, FotoSellado.Name);
+
+        var doc = new Documento
+        {
+            NombreArchivo = FotoSellado.Name,
+            BlobUrl = url,
+            Extension = Path.GetExtension(FotoSellado.Name),
+            FechaSubida = DateTime.Now,
+            TipoDocumento = DocumentType.FotoReciboSellado,
+            ReciboIngresoId = Modelo.Id
+        };
+
+        await DocumentoService.Crear(doc);
+
+        Modelo = await ReciboService.ObtenerPorIdConDocumentos(Modelo.Id);
+
+        Volver();
+    }
+
+    private async Task ImprimirRecibo()
+    {
+        await JS.InvokeVoidAsync("printSection", "reciboSection");
+    }
+
+    private void Volver()
+    {
+        var ruta = TipoEnum switch
+        {
+            ProcessType.DerechoEnterramiento => "/enterramiento",
+            ProcessType.ArrendamientoTerreno => "/arrendamiento",
+            ProcessType.DerechoConstruccion => "/construccion",
+            ProcessType.ExpedicionCertificacion => "/certificacion",
+            ProcessType.RegistroDocumentacion => "/registrodocumentacion",
+            _ => "/"
+        };
+
+        Nav.NavigateTo(ruta);
+    }
+}

@@ -7,18 +7,12 @@ public class Documento
 {
     public int Id { get; set; }
 
-    [Required]
-    [MaxLength(50)]
-    public string TipoDocumento { get; set; } = string.Empty;
+    public DocumentType TipoDocumento { get; set; }
 
-    [Required]
-    [MaxLength(150)]
     public string NombreArchivo { get; set; } = string.Empty;
 
-    [Required]
-    public string RutaArchivo { get; set; } = string.Empty;
+    public string BlobUrl { get; set; } = string.Empty;
 
-    [MaxLength(10)]
     public string? Extension { get; set; }
 
     public DateTime? FechaSubida { get; set; }
@@ -35,4 +29,6 @@ public class Documento
     public int? RegistroDocumentacionId { get; set; }
     public RegistroDocumentacion? RegistroDocumentacion { get; set; }
 
+    public int? ExpedicionCertificacionId { get; set; }
+    public ExpedicionCertificacion? ExpedicionCertificacion { get; set; }
 }

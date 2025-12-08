@@ -1,0 +1,198 @@
+﻿@page "/certificacion/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+
+@inject ExpedicionCertificacionService CertService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject NavigationManager Nav
+
+<h3 class="mb-4 text-primary fw-bold">Editar Certificación</h3>
+
+@if (Modelo == null)
+{
+    <div class="alert alert-info">Cargando...</div>
+}
+else
+{
+    <EditForm Model="@Modelo" OnValidSubmit="Guardar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="card shadow-sm p-4">
+
+            <h5 class="text-primary mb-3">Datos del Solicitante</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre</label>
+                <input class="form-control" @bind="SolicitanteProceso.NombreCompleto" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cédula</label>
+                <input class="form-control" @bind="SolicitanteProceso.Cedula" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <input class="form-control" @bind="SolicitanteProceso.Telefono" />
+            </div>
+
+            <hr />
+
+            <h5 class="text-primary mb-3">Datos del Fallecido</h5>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre del fallecido</label>
+                <input class="form-control" @bind="NombreFallecido" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cédula del fallecido</label>
+                <input class="form-control" @bind="CedulaFallecido" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Fecha de fallecimiento</label>
+                <InputDate class="form-control" @bind-Value="FechaFallecimiento" />
+            </div>
+
+            <hr />
+
+            <h5 class="text-primary mb-3">Estado</h5>
+
+            <div class="mb-3">
+                <label class="fw-semibold">Estado del proceso</label>
+                <InputSelect class="form-control" @bind-Value="Modelo.Estado" @onchange="EstadoCambio">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Emitida">Emitida</option>
+                </InputSelect>
+            </div>
+
+            @if (Modelo.FechaEmision != null)
+            {
+                <div class="mb-3">
+                    <label class="fw-semibold">Fecha de Emisión</label>
+                    <div class="border p-2 rounded bg-white">
+                        @Modelo.FechaEmision?.ToString("dd/MM/yyyy hh:mm tt")
+                    </div>
+                </div>
+            }
+
+            <hr />
+
+            <h5 class="text-primary mb-3">Documentos Adjuntos</h5>
+
+            @if (Documentos?.Any() == true)
+            {
+                <ul class="list-group mb-3">
+                    @foreach (var doc in Documentos)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-file-alt text-secondary"></i>
+                                @doc.TipoDocumento
+                            </span>
+
+                            <a href="@doc.BlobUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                Ver
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="alert alert-warning">No hay documentos subidos.</div>
+            }
+
+            <hr />
+
+            <button class="btn btn-primary mt-3" type="submit">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+
+            <button class="btn btn-secondary mt-3 ms-2" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> Volver
+            </button>
+        </div>
+    </EditForm>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private ExpedicionCertificacion? Modelo;
+    private Solicitante SolicitanteProceso = new();
+    private List<Documento>? Documentos;
+
+    private string NombreFallecido = "";
+    private string CedulaFallecido = "";
+    private DateTime FechaFallecimiento = DateTime.Today;
+
+    private string EstadoAnterior = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await CertService.ObtenerPorId(Id);
+
+        if (Modelo != null)
+        {
+            SolicitanteProceso = Modelo.Solicitante!;
+            EstadoAnterior = Modelo.Estado;
+            Documentos = Modelo.Documentos?.ToList();
+            ExtraerDatosDeContenido(Modelo.Contenido);
+        }
+    }
+
+    private void EstadoCambio(ChangeEventArgs e)
+    {
+        var nuevo = e.Value?.ToString();
+
+        if (EstadoAnterior == "Pendiente" && nuevo == "Emitida")
+            Modelo!.FechaEmision = DateTime.Now;
+
+        EstadoAnterior = nuevo!;
+    }
+
+    private void ExtraerDatosDeContenido(string contenido)
+    {
+        if (string.IsNullOrWhiteSpace(contenido)) return;
+
+        try
+        {
+            var partes = contenido.Split(',');
+
+            NombreFallecido = partes[0].Trim();
+
+            CedulaFallecido = partes[1]
+                .Replace("cédula", "")
+                .Replace("cedula", "")
+                .Replace(" ", "")
+                .Replace(".", "")
+                .Trim();
+
+            var fechaTxt = contenido.Split("falleció el")[1].Trim().TrimEnd('.');
+            FechaFallecimiento = DateTime.Parse(fechaTxt);
+        }
+        catch { }
+    }
+
+    private async Task Guardar()
+    {
+        await SolicitanteService.Actualizar(SolicitanteProceso);
+
+        Modelo!.Contenido =
+            $"{NombreFallecido}, cédula {CedulaFallecido}, falleció el {FechaFallecimiento:dd/MM/yyyy}.";
+
+        if (Modelo.Estado == "Emitida" && Modelo.FechaEmision == null)
+            Modelo.FechaEmision = DateTime.Now;
+
+        await CertService.Actualizar(Modelo!);
+
+        Nav.NavigateTo("/certificacion");
+    }
+    private void Volver() => Nav.NavigateTo("/certificacion");
+}

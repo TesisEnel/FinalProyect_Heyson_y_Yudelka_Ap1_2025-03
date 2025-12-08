@@ -1,0 +1,221 @@
+﻿@page "/construccion/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject DerechoConstruccionService ConstruccionService
+@inject SolicitanteService SolicitanteService
+@inject DocumentoService DocumentoService
+@inject BlobStorageService BlobService
+@inject NavigationManager Nav
+
+<div class="fw-bold text-primary mb-4">Editar Derecho a Construcción</div>
+
+@if (Error != null)
+{
+    <div class="alert alert-danger">@Error</div>
+}
+
+@if (Modelo == null)
+{
+    <div>Cargando...</div>
+}
+else
+{
+    <div class="card shadow p-4">
+
+        <EditForm FormName="EditConstruccionForm" Model="@Modelo" OnValidSubmit="Guardar">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <!-- FECHA Y HORA -->
+            <div class="col-md-4">
+                <strong>Fecha:</strong>
+                <div>@Modelo.Fecha.ToString("dd/MM/yyyy")</div>
+            </div>
+
+            <div class="col-md-4">
+                <strong>Hora:</strong>
+                <div>@Modelo.Hora.ToString(@"hh\:mm")</div>
+            </div>
+
+            <hr />
+
+            <!-- DATOS DEL SOLICITANTE -->
+            <h5 class="text-primary mb-3">Datos del Solicitante</h5>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nombre completo *</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.NombreCompleto" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cédula *</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.Cedula" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <InputText class="form-control" @bind-Value="SolicitanteProceso.Telefono" />
+            </div>
+
+            <hr />
+
+            <!-- MONTO -->
+            <h5 class="text-primary mb-3">Monto</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Monto RD$</label>
+                <InputNumber class="form-control" @bind-Value="Modelo.Monto" />
+            </div>
+
+            <hr />
+
+            <!-- RECIBO DEL INSPECTOR -->
+            <h5 class="text-primary mb-3">Recibo del Inspector</h5>
+
+            @if (InspectorActual != null)
+            {
+                <div class="mb-3">
+                    <strong>Documento actual:</strong><br />
+
+                    @if (InspectorActual.Extension.ToLower() == ".jpg"
+                                || InspectorActual.Extension.ToLower() == ".jpeg"
+                                || InspectorActual.Extension.ToLower() == ".png")
+                    {
+                        <!-- Miniatura -->
+                        <img src="@InspectorActual.BlobUrl"
+                             class="img-thumbnail shadow-sm mb-2"
+                             style="max-width: 180px;" />
+
+                        <br />
+                        <a href="@InspectorActual.BlobUrl" target="_blank" class="btn btn-outline-primary btn-sm">
+                            Ver documento
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-outline-primary btn-sm"
+                           href="@InspectorActual.BlobUrl"
+                           target="_blank">
+                            <i class="fas fa-file-pdf"></i> Abrir documento
+                        </a>
+                    }
+                </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted mb-2">No hay documento subido.</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Subir nuevo (opcional)</label>
+                            <InputFile OnChange="OnReciboInspectorSelected" class="form-control" />
+                        </div>
+                    }
+            <hr />
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar cambios
+                </button>
+
+                <button class="btn btn-secondary" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </button>
+            </div>
+
+        </EditForm>
+
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private DerechoConstruccion? Modelo;
+    private Solicitante SolicitanteProceso = new();
+
+    private IBrowserFile? ReciboInspectorNuevo;
+    private Documento? InspectorActual;
+
+    private string HoraTexto = "";
+    private string? Error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await ConstruccionService.ObtenerPorId(Id);
+
+        if (Modelo == null)
+        {
+            Error = "No se encontró el registro.";
+            return;
+        }
+
+        // Solicitante
+        SolicitanteProceso = Modelo.Solicitante;
+
+        // Hora
+        HoraTexto = Modelo.Hora.ToString(@"hh\:mm");
+
+        // Buscar documento dentro de la colección del modelo
+        InspectorActual = Modelo.Documentos?
+            .FirstOrDefault(d => d.TipoDocumento == DocumentType.ReciboInspector);
+    }
+
+    private void OnReciboInspectorSelected(InputFileChangeEventArgs e)
+    {
+        ReciboInspectorNuevo = e.File;
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            // Actualizar solicitante
+            await SolicitanteService.Actualizar(SolicitanteProceso);
+
+            // Actualizar hora
+            Modelo.Hora = TimeSpan.Parse(HoraTexto);
+
+            // Guardar cambios de construcción
+            await ConstruccionService.Actualizar(Modelo);
+
+            // Subir documento si hay uno nuevo
+            if (ReciboInspectorNuevo != null)
+            {
+                using var st = ReciboInspectorNuevo.OpenReadStream();
+
+                // Borrar documento anterior
+                if (InspectorActual != null)
+                    await DocumentoService.Eliminar(InspectorActual.Id);
+
+                // Subir nuevo documento al blob
+                var url = await BlobService.UploadFileAsync(st, ReciboInspectorNuevo.Name);
+
+                var nuevoDoc = new Documento
+                {
+                    NombreArchivo = ReciboInspectorNuevo.Name,
+                    BlobUrl = url,
+                    Extension = Path.GetExtension(ReciboInspectorNuevo.Name),
+                    FechaSubida = DateTime.Now,
+                    TipoDocumento = DocumentType.ReciboInspector,
+                    DerechoConstruccionId = Modelo.Id
+                };
+
+                await DocumentoService.Crear(nuevoDoc);
+
+                Modelo.ReciboInspectorPath = url;
+                await ConstruccionService.Actualizar(Modelo);
+            }
+
+            Nav.NavigateTo("/construccion");
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error al guardar: {ex.Message}";
+        }
+    }
+    private void Volver() => Nav.NavigateTo("/construccion");
+}

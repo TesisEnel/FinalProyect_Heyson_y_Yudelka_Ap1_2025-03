@@ -1,0 +1,148 @@
+﻿@page "/arrendamiento/details/{Id:int}"
+@rendermode InteractiveServer
+
+@using FinalProyect.Models
+@inject ArrendamientoTerrenoService ArrService
+@inject NavigationManager Nav
+
+<h3 class="text-primary mb-4">Detalles del Arrendamiento</h3>
+
+@if (Modelo == null)
+{
+    <div class="alert alert-warning">Cargando...</div>
+    return;
+}
+
+<div class="card shadow-sm p-4">
+
+    <h5 class="text-primary">Datos del Solicitante</h5>
+    <p><strong>Nombre:</strong> @Modelo.Solicitante?.NombreCompleto</p>
+    <p><strong>Cédula:</strong> @Modelo.Solicitante?.Cedula</p>
+    <p><strong>Teléfono:</strong> @Modelo.Solicitante?.Telefono</p>
+
+    <hr />
+
+    <h5 class="text-primary">Datos del Arrendamiento</h5>
+    <p><strong>Fecha inicio:</strong> @Modelo.FechaInicio.ToString("dd/MM/yyyy")</p>
+    <p><strong>Fecha fin:</strong> @Modelo.FechaFin.ToString("dd/MM/yyyy")</p>
+    <p><strong>Metros cuadrados:</strong> @Modelo.MetrosCuadrados</p>
+    <p><strong>Monto:</strong> RD$ @ProcessPrices.GetPrice(ProcessType.ArrendamientoTerreno, Modelo.MetrosCuadrados).ToString("N2")</p>
+    <p><strong>Ubicación:</strong> @Modelo.Ubicacion</p>
+
+    <p>
+        <strong>Notificar vencimiento:</strong>
+        @(Modelo.NotificarVencimiento ? "Sí" : "No")
+    </p>
+
+    <hr/>
+
+    <h6 class="text-primary fw-bold">Recibo Adjunto</h6>
+
+    <div class="row">
+        @DocumentCard("Recibo Sellado", DocumentType.FotoReciboSellado)
+    </div>
+
+    <hr />
+
+    <h6 class="text-primary fw-bold">Recibo</h6>
+
+    @if (Modelo.ReciboIngresoId == null)
+    {
+        <div class="mb-3">
+            <button class="btn btn-success"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/{ProcessType.ArrendamientoTerreno}"))">
+                <i class="fas fa-receipt"></i> Generar Recibo
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <button class="btn btn-primary"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/{ProcessType.ArrendamientoTerreno}?view=true"))">
+                <i class="fas fa-eye"></i> Ver Recibo
+            </button>
+        </div>
+    }
+
+    <div class="mt-2">
+        <button class="btn btn-warning me-2"
+                @onclick="@(() => Nav.NavigateTo($"/arrendamiento/edit/{Modelo.Id}"))">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+
+        <button class="btn btn-secondary"
+                @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    ArrendamientoTerreno? Modelo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Modelo = await ArrService.ObtenerPorId(Id);
+    }
+
+    private void Volver() => Nav.NavigateTo("/arrendamiento");
+
+    private RenderFragment DocumentCard(string titulo, DocumentType tipo) => __builder =>
+    {
+        Documento? doc = null;
+
+        doc = Modelo?.ReciboIngreso?.Documentos?
+            .FirstOrDefault(d => d.TipoDocumento == tipo)
+            ?? Modelo?.Documentos?.FirstOrDefault(d => d.TipoDocumento == tipo);
+
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "col-md-3 mb-3");
+
+        __builder.OpenElement(2, "div");
+        __builder.AddAttribute(3, "class", "card shadow-sm text-center p-2");
+
+        __builder.OpenElement(4, "h6");
+        __builder.AddContent(5, titulo);
+        __builder.CloseElement();
+
+        if (doc == null)
+        {
+            __builder.OpenElement(6, "div");
+            __builder.AddAttribute(7, "class", "text-muted small");
+            __builder.AddContent(8, "No disponible");
+            __builder.CloseElement();
+        }
+        else
+        {
+            if (doc.Extension.ToLower().Contains("pdf"))
+            {
+                __builder.OpenElement(9, "img");
+                __builder.AddAttribute(10, "src", "_content/FinalProyect/pdf_icon.png");
+                __builder.AddAttribute(11, "class", "img-thumbnail mb-2");
+                __builder.AddAttribute(12, "style", "height:80px; object-fit:contain;");
+                __builder.CloseElement();
+            }
+            else
+            {
+                __builder.OpenElement(13, "img");
+                __builder.AddAttribute(14, "src", doc.BlobUrl);
+                __builder.AddAttribute(15, "class", "img-thumbnail mb-2");
+                __builder.AddAttribute(16, "style", "height:80px; object-fit:cover;");
+                __builder.CloseElement();
+            }
+
+            __builder.OpenElement(17, "a");
+            __builder.AddAttribute(18, "href", doc.BlobUrl);
+            __builder.AddAttribute(19, "target", "_blank");
+            __builder.AddAttribute(20, "class", "btn btn-primary btn-sm");
+            __builder.AddContent(21, "Ver documento");
+            __builder.CloseElement();
+        }
+
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+}
+

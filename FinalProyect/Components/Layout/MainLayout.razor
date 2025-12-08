@@ -1,23 +1,72 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div class="page-wrapper"> 
+    <aside class="sidebar-wrapper"> 
+        <NavMenu /> 
+    </aside> 
+    <main class="main-content d-flex flex-column">
+        <Topbar />
+    <div class="container-fluid py-4 flex-grow-1"> 
+        @Body
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <Footer/>
 
-        <article class="content px-4">
-            @Body
-        </article>
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+<AuthorizeView>
+    <Authorized>
+        <script src="scripts/print.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+        <script>
+            globalThis.historialExport = {
+
+                exportPDF: function () {
+                    const { jsPDF } = globalThis.jspdf;
+                    const doc = new jsPDF();
+
+                    doc.text("Historial de Ingresos", 14, 10);
+
+                    const table = document.querySelector("table");
+                    if (table) {
+                        doc.autoTable({
+                            html: table,
+                            theme: 'grid',
+                            startY: 20,
+                        });
+                        doc.save("Historial_Ingresos.pdf");
+                    } else {
+                        alert("No table found to export!");
+                    }
+                },
+
+                exportExcel: function () {
+                    const table = document.querySelector("table");
+                    if (table) {
+                        const wb = XLSX.utils.table_to_book(table);
+                        XLSX.writeFile(wb, "Historial_Ingresos.xlsx");
+                    } else {
+                        alert("No table found to export!");
+                    }
+                }
+            };
+        </script>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += (_, __) => StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= (_, __) => StateHasChanged();
+    }
+}

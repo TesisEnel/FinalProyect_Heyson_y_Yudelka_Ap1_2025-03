@@ -7,29 +7,33 @@ public class DerechoEnterramiento
 {
     public int Id { get; set; }
 
-    [Required]
+    public ProcessType TipoProceso { get; set; } = ProcessType.DerechoEnterramiento;
     public string UsuarioId { get; set; } = string.Empty;
     public ApplicationUser Usuario { get; set; }
 
-    [Required]
     public int SolicitanteId { get; set; }
     public Solicitante Solicitante { get; set; }
 
-    [Required]
-    [MaxLength(100)]
+    [Required(ErrorMessage = "El nombre del fallecido es obligatorio.")]
+    [MaxLength(150)]
     public string NombreFallecido { get; set; } = string.Empty;
 
-    [Required]
-    [MaxLength(20)]
+    [Required(ErrorMessage = "La cédula del fallecido es obligatoria.")]
+    [RegularExpression(@"^[0-9]{3}[- ]?[0-9]{7}[- ]?[0-9]{1}$",
+        ErrorMessage = "La cédula no es válida.")]
     public string CedulaFallecido { get; set; } = string.Empty;
 
-    [Required]
+    [Required(ErrorMessage = "La fecha es obligatoria.")]
     public DateTime Fecha { get; set; }
 
-    [Required]
+    [Required(ErrorMessage = "La hora es obligatoria.")]
     public TimeSpan Hora { get; set; }
 
-    [Required]
-    public int ReciboIngresoId { get; set; }
-    public ReciboIngreso ReciboIngreso { get; set; }
+    public int? ReciboIngresoId { get; set; }
+    public ReciboIngreso? ReciboIngreso { get; set; }
+
+    public ICollection<Documento>? Documentos { get; set; }
+
+    public static string GetConcepto() => "Derecho a enterramiento";
+    public static int GetMetros() => 0;
 }
