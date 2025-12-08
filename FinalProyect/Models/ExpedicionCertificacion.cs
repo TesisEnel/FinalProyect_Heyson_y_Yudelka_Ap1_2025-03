@@ -35,7 +35,7 @@ public class ExpedicionCertificacion
     public DateTime FechaSolicitud { get; set; } = DateTime.Now;
     public DateTime? FechaEmision { get; set; }
 
-    public string UsuarioId { get; set; } = string.Empty; 
+    public string UsuarioId { get; set; } = string.Empty;
     public ApplicationUser? Usuario { get; set; }
 
     [Required]
@@ -47,7 +47,8 @@ public class ExpedicionCertificacion
 
     public ICollection<Documento>? Documentos { get; set; }
 
-    public static string GetConcepto() => "Expedición de certificación";
+    public const string Concepto = "Expedición de certificación";
+
 }
 
 
