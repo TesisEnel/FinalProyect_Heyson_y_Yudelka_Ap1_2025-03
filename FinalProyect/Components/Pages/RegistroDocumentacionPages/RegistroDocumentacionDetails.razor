@@ -55,21 +55,35 @@ else
 
         <hr />
 
-        <div class="d-flex gap-2 mt-3">
+        <h6 class="text-primary fw-bold">Recibo</h6>
 
-            <button class="btn btn-secondary" @onclick="Volver">
-                <i class="fas fa-arrow-left"></i> Volver
+        @if (Modelo.ReciboIngresoId == null)
+        {
+            <div class="alert alert-warning">Aún no se ha generado un recibo.</div>
+
+            <button class="btn btn-success"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/RegistroDocumentacion"))">
+                <i class="fas fa-receipt"></i> Generar Recibo
             </button>
-
-            <button class="btn btn-warning" @onclick="@(() => Editar(Modelo.Id))">
-                <i class="fas fa-edit"></i> Editar
+        }
+        else
+        {
+            <button class="btn btn-primary"
+                    @onclick="@(() => Nav.NavigateTo($"/recibo/create/{Modelo.Id}/RegistroDocumentacion?view=true"))">
+                <i class="fas fa-eye"></i> Ver Recibo
             </button>
+        }
 
-            <button class="btn btn-success" @onclick="@(() => GenerarRecibo(Modelo.Id))">
-                <i class="fas fa-receipt"></i> Recibo
-            </button>
+        <hr />
 
-        </div>
+        <button class="btn btn-warning me-2"
+                @onclick="@(() => Nav.NavigateTo($"/registrodocumentacion/edit/{Modelo.Id}"))">
+            <i class="fas fa-edit"></i> Editar
+        </button>
+
+        <button class="btn btn-secondary" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> Volver
+        </button>
 
     </div>
 }
@@ -152,9 +166,4 @@ else
 };
     private void Volver() => Nav.NavigateTo("/registrodocumentacion");
 
-    private void Editar(int id)
-        => Nav.NavigateTo($"/registrodocumentacion/edit/{id}");
-
-    private void GenerarRecibo(int id)
-        => Nav.NavigateTo($"/recibo/create/{id}?proceso=registrodocumentacion");
 }

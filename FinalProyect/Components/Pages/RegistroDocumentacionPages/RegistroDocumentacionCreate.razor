@@ -75,7 +75,8 @@
 
         <hr />
 
-        <button class="btn btn-success">
+        <button class="btn btn-success"
+                disabled="@(!FormularioListo)">
             <i class="fas fa-save"></i> Guardar y generar recibo
         </button>
 
@@ -93,15 +94,25 @@
     {
         ReciboNotariosFile = e.File;
         ErrorArchivo = null;
+        StateHasChanged();
     }
 
     private async Task<string> GetUserId()
     {
         var auth = await AuthProvider.GetAuthenticationStateAsync();
-        return auth.User.Identity?.IsAuthenticated == true
-            ? UserManager.GetUserId(auth.User)
-            : "";
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+            return UserManager.GetUserId(user);
+
+        return "";
     }
+
+    private bool FormularioListo =>
+    !string.IsNullOrWhiteSpace(Modelo.NombreCompleto) &&
+    !string.IsNullOrWhiteSpace(Modelo.Cedula) &&
+    !string.IsNullOrWhiteSpace(Modelo.TipoDocumentacion) &&
+    ReciboNotariosFile != null;
 
     private async Task Guardar()
     {
@@ -110,10 +121,11 @@
             if (ReciboNotariosFile == null)
             {
                 ErrorArchivo = "Debe subir el recibo del Colegio de Notarios.";
+                StateHasChanged();
                 return;
             }
 
-            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
+            Modelo.UsuarioId = await GetUserId();
             Modelo.FechaRegistro = DateTime.Now;
 
             var solicitante = new Solicitante

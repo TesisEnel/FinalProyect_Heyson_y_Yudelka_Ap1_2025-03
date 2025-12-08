@@ -95,17 +95,20 @@
 
     private async Task<string> GetUserId()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        return authState.User.Identity?.IsAuthenticated == true
-            ? UserManager.GetUserId(authState.User)
-            : "";
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+            return UserManager.GetUserId(user);
+
+        return "";
     }
 
     private async Task Guardar()
     {
         try
         {
-            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
+            Modelo.UsuarioId = await GetUserId();  
 
             Modelo.SolicitanteId = await SolicitanteService.ObtenerIdOcrear(SolicitanteProceso);
 

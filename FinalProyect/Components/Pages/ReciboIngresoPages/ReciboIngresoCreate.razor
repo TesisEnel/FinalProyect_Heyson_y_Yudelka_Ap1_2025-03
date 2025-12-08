@@ -190,7 +190,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!Enum.TryParse(TipoProceso, out TipoEnum))
+        if (!Enum.TryParse(TipoProceso, true, out TipoEnum))
         {
             Error = "Tipo de proceso inválido.";
             return;

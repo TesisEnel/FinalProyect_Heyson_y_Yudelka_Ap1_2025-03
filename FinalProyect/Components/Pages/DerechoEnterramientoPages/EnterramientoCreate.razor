@@ -85,7 +85,8 @@
         </div>
     </div>
 
-    <button class="btn btn-success mt-3" @onclick="Guardar">
+    <button class="btn btn-success mt-3" @onclick="Guardar"
+        disabled="@(!FormularioListo)">
         <i class="fas fa-save"></i> Guardar y generar recibo
     </button>
 
@@ -109,6 +110,20 @@
     string HoraTexto { get; set; } = DateTime.Now.ToString("HH:mm");
 
     string[] Permitidos = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+
+    private bool FormularioListo =>
+
+    !string.IsNullOrWhiteSpace(SolicitanteProceso.NombreCompleto) &&
+    !string.IsNullOrWhiteSpace(SolicitanteProceso.Cedula) &&
+    !string.IsNullOrWhiteSpace(SolicitanteProceso.Telefono) &&
+
+    CedulaSolicitanteFile != null &&
+    CedulaFallecidoFile != null &&
+    ActaDefuncionFile != null &&
+
+    !string.IsNullOrWhiteSpace(Modelo.NombreFallecido) &&
+    !string.IsNullOrWhiteSpace(Modelo.CedulaFallecido);
+
 
     protected override void OnInitialized()
     {
@@ -164,7 +179,7 @@
         {
             ErrorGlobal = "";
 
-            Modelo.UsuarioId = "07c9e900-6fbc-4b27-953f-4de7b4a29def";
+            Modelo.UsuarioId = await GetUserId();
 
             Modelo.Hora = TimeSpan.ParseExact(HoraTexto, "hh\\:mm", null);
 
