@@ -10,16 +10,18 @@
 
 <div class="card shadow mb-4">
 
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div class="m-0 fw-bold text-primary">Historial de Ingresos</div>
 
-        <div class="d-flex gap-2 align-items-center">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
 
-            <InputDate @bind-Value="FechaDesde" class="form-control" style="width:150px;" />
+            <span class="fw-bold text-secondary small">Desde:</span>
+            <InputDate @bind-Value="FechaDesde" class="form-control form-control-sm" style="width:130px;" />
 
-            <InputDate @bind-Value="FechaHasta" class="form-control" style="width:150px;" />
+            <span class="fw-bold text-secondary small">Hasta:</span>
+            <InputDate @bind-Value="FechaHasta" class="form-control form-control-sm" style="width:130px;" />
 
-            <InputSelect class="form-control" style="width:150px;" @bind-Value="MesSeleccionado">
+            <InputSelect class="form-control form-control-sm" style="width:120px;" @bind-Value="MesSeleccionado">
                 <option value="">Mes...</option>
                 @foreach (var m in Meses)
                 {
@@ -27,16 +29,21 @@
                 }
             </InputSelect>
 
-            <input class="form-control" style="width:200px;"
+            <input class="form-control form-control-sm" style="width:180px;"
+                   placeholder="Buscar Nombre/Cédula..."
+                   @bind="FiltroGeneral"
+                   @bind:event="oninput" />
+
+            <input class="form-control form-control-sm" style="width:150px;"
                    placeholder="Descripción..."
                    @bind="FiltroDescripcion"
                    @bind:event="oninput" />
 
-            <button class="btn btn-danger" @onclick="ExportarPDF">
+            <button class="btn btn-danger btn-sm" @onclick="ExportarPDF">
                 <i class="fas fa-file-pdf"></i>
             </button>
 
-            <button class="btn btn-success" @onclick="ExportarExcel">
+            <button class="btn btn-success btn-sm" @onclick="ExportarExcel">
                 <i class="fas fa-file-excel"></i>
             </button>
 
@@ -47,44 +54,65 @@
 
         @if (Lista == null)
         {
-            <div class="p-3">Cargando...</div>
+            <div class="p-3 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
         }
         else if (!ListaFiltrada.Any())
         {
-            <div class="p-3">No hay resultados.</div>
+            <div class="p-3 text-center text-muted">No se encontraron resultados.</div>
         }
         else
         {
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Mes</th>
-                        <th>Descripción</th>
-                        <th class="text-end">Monto</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in ListaFiltrada)
-                    {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>@item.FechaEmision.ToString("dd/MM/yyyy")</td>
-                            <td>@item.FechaEmision.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"))</td>
-                            <td>@item.Concepto</td>
-                            <td class="text-end">RD$ @item.Monto.ToString("N2")</td>
+                            <th>Fecha</th>
+                            <th>Solicitante</th>
+                            <th>Cédula</th>
+                            <th>Descripción</th>
+                            <th>Usuario</th>
+                            <th class="text-end">Monto</th>
                         </tr>
-                    }
-                </tbody>
-                <tfoot>
-                    <tr class="fw-bold table-secondary">
-                        <td colspan="3" class="text-end">TOTAL</td>
-                        <td class="text-end">RD$ @TotalFiltrado.ToString("N2")</td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in ListaFiltrada)
+                        {
+                            <tr>
+                                <td style="white-space: nowrap;">
+                                    @item.FechaEmision.ToString("dd/MM/yyyy")
+                                </td>
+                                <td class="fw-bold">
+                                    @(item.Solicitante?.NombreCompleto ?? "---")
+                                </td>
+                                <td>
+                                    @(item.Solicitante?.Cedula ?? "---")
+                                </td>
+                                <td>@item.Concepto</td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        Admin
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-success">
+                                    RD$ @item.Monto.ToString("N2")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="5" class="text-end">TOTAL</td>
+                            <td class="text-end">RD$ @TotalFiltrado.ToString("N2")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         }
     </div>
-
 </div>
 
 @code {
@@ -94,6 +122,7 @@
     private DateTime? FechaHasta { get; set; }
     private string MesSeleccionado { get; set; } = "";
     private string FiltroDescripcion { get; set; } = "";
+    private string FiltroGeneral { get; set; } = "";
 
     private List<string> Meses = System.Globalization.CultureInfo
         .GetCultureInfo("es-ES").DateTimeFormat.MonthNames
@@ -106,11 +135,17 @@
             .Where(r =>
                 (FechaDesde == null || r.FechaEmision.Date >= FechaDesde.Value.Date) &&
                 (FechaHasta == null || r.FechaEmision.Date <= FechaHasta.Value.Date) &&
+
                 (string.IsNullOrWhiteSpace(MesSeleccionado) ||
                  r.FechaEmision.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"))
                  .Equals(MesSeleccionado, StringComparison.OrdinalIgnoreCase)) &&
+
                 (string.IsNullOrWhiteSpace(FiltroDescripcion) ||
-                 r.Concepto.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))
+                 (r.Concepto != null && r.Concepto.Contains(FiltroDescripcion, StringComparison.OrdinalIgnoreCase))) &&
+
+                (string.IsNullOrWhiteSpace(FiltroGeneral) ||
+                 (r.Solicitante != null && r.Solicitante.NombreCompleto.Contains(FiltroGeneral, StringComparison.OrdinalIgnoreCase)) ||
+                 (r.Solicitante != null && r.Solicitante.Cedula.Contains(FiltroGeneral, StringComparison.OrdinalIgnoreCase)))
             );
 
     private decimal TotalFiltrado =>
@@ -118,7 +153,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Lista = await ReciboService.ObtenerTodos();
+        try
+        {
+            Lista = await ReciboService.ObtenerTodos();
+        }
+        catch
+        {
+            Lista = new List<ReciboIngreso>();
+        }
     }
 
     private async Task ExportarPDF()
