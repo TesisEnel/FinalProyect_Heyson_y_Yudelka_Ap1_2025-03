@@ -36,106 +36,99 @@
 
     <hr class="horizontal-light mb-4 mt-0 opacity-50">
 
-    <AuthorizeView>
-        <Authorized Context="auth">
-
-            @{
-                var user = auth.User;
-                bool isAdmin = user.IsInRole("Admin");
-                bool isTesorera = user.IsInRole("Tesorera");
-            }
-
-            <ul class="nav nav-pills flex-column mb-auto">
+    <ul class="nav nav-pills flex-column mb-auto">
 
         <li class="nav-item mb-2">
             <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="" Match="NavLinkMatch.All">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
                     <i class="fas fa-home"></i>
                 </div>
                 <span class="nav-link-text ms-2 fw-normal">Inicio</span>
             </NavLink>
         </li>
 
+        <AuthorizeView>
+            <Authorized Context="auth">
+                @{
+                    var user = auth.User;
+                    bool isAdmin = user.IsInRole("Admin");
+                }
+
                 <li class="nav-item mt-4 mb-2">
-                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">
-                        Procesos
-                    </h6>
+                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Procesos</h6>
                 </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="enterramiento">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-cross"></i>
-                </div>
-                <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Enterramiento</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="enterramiento">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-cross"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Enterramiento</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="construccion">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-tools"></i>
-                </div>
-                <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Construcción</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="construccion">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Construcción</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="registrodocumentacion">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <span class="nav-link-text ms-2 text-wrap lh-sm">Registro Documentación</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="registrodocumentacion">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 text-wrap lh-sm">Registro Documentación</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="certificacion">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-file-signature"></i>
-                </div>
-                <span class="nav-link-text ms-2">Certificaciones</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="certificacion">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <span class="nav-link-text ms-2">Certificaciones</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="arrendamiento">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-vector-square"></i>
-                </div>
-                <span class="nav-link-text ms-2 text-wrap lh-sm">Arrendamiento Terreno</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="arrendamiento">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-vector-square"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 text-wrap lh-sm">Arrendamiento Terreno</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="consultaingreso">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <span class="nav-link-text ms-2 text-wrap lh-sm">Consulta Ingresos</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="consultaingreso">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <span class="nav-link-text ms-2 text-wrap lh-sm">Consulta Ingresos</span>
+                    </NavLink>
+                </li>
 
-        <li class="nav-item mb-2">
-            <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="historial">
-                <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                    <i class="fas fa-history"></i>
-                </div>
-                <span class="nav-link-text ms-2">Historial</span>
-            </NavLink>
-        </li>
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="historial">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <span class="nav-link-text ms-2">Historial</span>
+                    </NavLink>
+                </li>
 
                 @if (isAdmin)
                 {
                     <li class="nav-item mt-4 mb-2">
-                        <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">
-                            Administración
-                        </h6>
+                        <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Administración</h6>
                     </li>
-
                     <li class="nav-item mb-2">
                         <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="admin">
-                            <div class="icon-box bg-gradient-dark border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
                                 <i class="fas fa-user-shield"></i>
                             </div>
                             <span class="nav-link-text ms-2">Panel Admin</span>
@@ -161,7 +154,7 @@
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link text-white d-flex align-items-center w-100 border-0 bg-transparent text-start py-2 px-3">
-                            <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                            <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
                                 <i class="fas fa-sign-out-alt"></i>
                             </div>
                             <span class="nav-link-text ms-2">Cerrar Sesión</span>
@@ -169,20 +162,23 @@
                     </form>
                 </li>
             </Authorized>
+
             <NotAuthorized>
+                <li class="nav-item mt-4 mb-2">
+                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Acceso</h6>
+                </li>
                 <li class="nav-item mb-2">
                     <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="Account/Login">
-                        <div class="icon-box bg-gradient-dark text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
+                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
                             <i class="fas fa-key"></i>
                         </div>
                         <span class="nav-link-text ms-2">Iniciar Sesión</span>
                     </NavLink>
                 </li>
-            </ul>
-        </NotAuthorized>
+            </NotAuthorized>
+        </AuthorizeView>
 
-    </AuthorizeView>
-
+    </ul>
 </div>
 
 @code {
