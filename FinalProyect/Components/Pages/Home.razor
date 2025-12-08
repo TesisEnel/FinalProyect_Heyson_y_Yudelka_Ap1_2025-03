@@ -1,7 +1,234 @@
 ﻿@page "/"
+@using FinalProyect.Models
+@using FinalProyect.Services
+@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Home</PageTitle>
+@inject ReciboIngresoService ReciboService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h1>Hello, world!</h1>
+<PageTitle>Inicio - Tesorería</PageTitle>
 
-Welcome to your new app.
+<div class="container-fluid py-4">
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card my-4 border-0 shadow-sm">
+                <div class="card-body p-3 d-flex align-items-center">
+                    <div class="icon-box bg-gradient-primary shadow text-center border-radius-md me-3 d-flex align-items-center justify-content-center"
+                         style="width: 50px; height: 50px;">
+                        <i class="fas fa-user-tie text-white fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 text-dark font-weight-bold">Bienvenido</h4>
+                        <p class="text-sm mb-0 text-secondary">Panel de control de Tesorería Municipal</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon-box bg-gradient-dark shadow-dark text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center"
+                         style="width: 64px; height: 64px;">
+                        <i class="fas fa-file-invoice text-white fs-4"></i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize text-secondary font-weight-bold">Procesos Hoy</p>
+                        <h4 class="mb-0">@ProcesosHoy</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">@TotalProcesos</span> en total histórico</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon-box bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center"
+                         style="width: 64px; height: 64px;">
+                        <i class="fas fa-money-bill-wave text-white fs-4"></i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize text-secondary font-weight-bold">Recaudado Hoy</p>
+                        <h4 class="mb-0 text-success">RD$ @DineroHoy.ToString("N0")</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0"><span class="text-success text-sm font-weight-bolder">RD$ @DineroTotal.ToString("N0")</span> total acumulado</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon-box bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center"
+                         style="width: 64px; height: 64px;">
+                        <i class="fas fa-folder-open text-white fs-4"></i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize text-secondary font-weight-bold">Documentos</p>
+                        <h4 class="mb-0">@DocumentosTotal</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0">Archivos adjuntos en sistema</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header p-3 pt-2">
+                    <div class="icon-box bg-gradient-warning shadow-warning text-center border-radius-xl mt-n4 position-absolute d-flex align-items-center justify-content-center"
+                         style="width: 64px; height: 64px;">
+                        <i class="fas fa-users text-white fs-4"></i>
+                    </div>
+                    <div class="text-end pt-1">
+                        <p class="text-sm mb-0 text-capitalize text-secondary font-weight-bold">Solicitantes</p>
+                        <h4 class="mb-0">@TotalSolicitantes</h4>
+                    </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                    <p class="mb-0">Ciudadanos registrados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card my-4 border-0 shadow-sm">
+                <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+                    <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3 d-flex justify-content-between align-items-center px-3"
+                         style="background-image: linear-gradient(195deg, #42424a 0%, #191919 100%);">
+                        <h6 class="text-white text-capitalize ps-3 mb-0">Últimos Procesos Realizados</h6>
+                        <a href="historial" class="btn btn-sm btn-outline-white mb-0 text-white" style="border-color: rgba(255,255,255,0.5);">Ver Todo</a>
+                    </div>
+                </div>
+                <div class="card-body px-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tipo / Concepto</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Solicitante</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Fecha</th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Monto</th>
+                                    <th class="text-secondary opacity-7"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (UltimosRegistros == null)
+                                {
+                                    <tr><td colspan="5" class="text-center py-4">Cargando...</td></tr>
+                                }
+                                else if (!UltimosRegistros.Any())
+                                {
+                                    <tr><td colspan="5" class="text-center py-4 text-secondary">No hay registros recientes.</td></tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in UltimosRegistros)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex px-2 py-1">
+                                                    <div>
+                                                        <div class="icon-box-sm bg-light rounded-circle text-center d-flex align-items-center justify-content-center me-3" style="width:36px; height:36px;">
+                                                            <i class="fas fa-file-alt text-dark text-xs"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex flex-column justify-content-center">
+                                                        <h6 class="mb-0 text-sm">@item.Concepto</h6>
+                                                        <p class="text-xs text-secondary mb-0">Recibo #@item.Id</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <p class="text-xs font-weight-bold mb-0">@(item.Solicitante?.NombreCompleto ?? "---")</p>
+                                                <p class="text-xs text-secondary mb-0">@(item.Solicitante?.Cedula ?? "")</p>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <span class="text-secondary text-xs font-weight-bold">@item.FechaEmision.ToString("dd/MM/yyyy")</span>
+                                            </td>
+                                            <td class="align-middle text-center">
+                                                <span class="badge bg-gradient-success">RD$ @item.Monto.ToString("N0")</span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <a href="historial" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
+                                                    Ver
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string UserName = "Tesorera";
+    private List<ReciboIngreso>? UltimosRegistros;
+
+    private int ProcesosHoy = 0;
+    private int TotalProcesos = 0;
+    private decimal DineroHoy = 0;
+    private decimal DineroTotal = 0;
+    private int DocumentosTotal = 0;
+    private int TotalSolicitantes = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                UserName = user.Identity.Name ?? "Usuario";
+            }
+
+            var todos = await ReciboService.ObtenerTodos();
+
+            if (todos != null)
+            {
+                var today = DateTime.Today;
+                var registrosHoy = todos.Where(x => x.FechaEmision.Date == today).ToList();
+
+                ProcesosHoy = registrosHoy.Count;
+                TotalProcesos = todos.Count;
+
+                DineroHoy = registrosHoy.Sum(x => x.Monto);
+                DineroTotal = todos.Sum(x => x.Monto);
+
+                DocumentosTotal = todos.Sum(x => x.Documentos?.Count ?? 0);
+
+                TotalSolicitantes = todos.Select(x => x.SolicitanteId).Distinct().Count();
+
+                UltimosRegistros = todos.OrderByDescending(x => x.FechaEmision).Take(5).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+            UltimosRegistros = new List<ReciboIngreso>();
+        }
+    }
+}
