@@ -1,10 +1,13 @@
 ﻿@page "/"
 @using FinalProyect.Models
 @using FinalProyect.Services
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize]
 
 @inject ReciboIngresoService ReciboService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Inicio - Tesorería</PageTitle>
 
@@ -264,15 +267,18 @@
     private int TotalSolicitantes = 0;
 
     protected override async Task OnInitializedAsync()
-    {
+    {   
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity == null || !user.Identity.IsAuthenticated)
+        {
+            Nav.NavigateTo("Account/Login", true);
+            return;
+        }
         try
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if (user.Identity != null && user.Identity.IsAuthenticated)
-            {
-                UserName = user.Identity.Name ?? "Usuario";
-            }
+            UserName = user.Identity.Name ?? "Usuario";
 
             var todos = await ReciboService.ObtenerTodos();
 

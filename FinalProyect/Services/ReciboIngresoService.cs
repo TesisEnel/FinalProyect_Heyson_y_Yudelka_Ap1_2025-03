@@ -75,12 +75,16 @@ namespace FinalProyect.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<ReciboIngreso?> ObtenerPorIdConDocumentos(int id)
+        public async Task<ReciboIngreso> ObtenerPorIdConDocumentos(int id)
         {
-            if (_context.ReciboIngreso == null) return null;
-            return await _context.ReciboIngreso
+            if (_context.ReciboIngreso == null) return new ReciboIngreso();
+
+            var recibo = await _context.ReciboIngreso
+                .Include(r => r.Solicitante)
                 .Include(r => r.Documentos)
                 .FirstOrDefaultAsync(r => r.Id == id);
+
+            return recibo ?? new ReciboIngreso();
         }
     }
 }

@@ -21,16 +21,11 @@ public class ExpedicionCertificacion
         ErrorMessage = "El teléfono no es válido.")]
     public string Telefono { get; set; }
 
-    [Required(ErrorMessage = "Debe seleccionar un tipo de certificación.")]
-    public string TipoCertificacion { get; set; }
-
-    [Required(ErrorMessage = "El contenido es obligatorio.")]
-    [MaxLength(500)]
-    public string Contenido { get; set; }
-
-    public decimal Monto { get; set; }
-
+    public string? TipoCertificacion { get; set; }
     public string Estado { get; set; } = "Pendiente";
+
+    [MaxLength(500)]
+    public string? Contenido { get; set; } = string.Empty;
 
     public DateTime FechaSolicitud { get; set; } = DateTime.Now;
     public DateTime? FechaEmision { get; set; }

@@ -1,7 +1,7 @@
 ﻿@implements IDisposable
-@inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
+@using FinalProyect.Models
+@inject NavigationManager Nav
 
 <style>
     .sidebar-navy {
@@ -12,166 +12,136 @@
     .icon-glass {
         background-color: rgba(255,255,255,0.15) !important;
         color: white !important;
-        box-shadow: none !important;
     }
 
     ::deep .nav-link.active .icon-glass {
         background-image: linear-gradient(195deg, #49a3f1 0%, #1A73E8 100%) !important;
-        background-color: transparent !important;
-        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(0, 188, 212, 0.4) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,.14);
     }
 </style>
 
-<div class="material-sidebar sidebar-navy d-flex flex-column flex-shrink-0 p-3 text-white">
+<div class="material-sidebar sidebar-navy d-flex flex-column flex-shrink-0 p-3 text-white"
+     style="height: 100vh; overflow-y: auto;">
 
-    <a href="/" class="d-flex align-items-center mb-4 mt-2 text-white text-decoration-none px-2">
+    <div class="d-flex align-items-center mb-4 mt-2 px-2">
         <div class="icon-box bg-white text-dark text-center border-radius-xl me-3 d-flex align-items-center justify-content-center shadow-sm">
-            <i class="fas fa-landmark fs-5" style="color: #171840;"></i>
+            <i class="fas fa-landmark fs-5" style="color:#171840;"></i>
         </div>
-        <div class="d-flex flex-column justify-content-center">
-            <span class="fs-5 fw-bold font-monospace">Tesorería</span>
-            <span class="small opacity-75">Panel Administrativo</span>
+        <div>
+            <div class="fw-bold fs-5 font-monospace">Tesorería</div>
+            <div class="small opacity-75">Panel Administrativo</div>
         </div>
-    </a>
+    </div>
 
-    <hr class="horizontal-light mb-4 mt-0 opacity-50">
+    <hr class="opacity-50">
 
     <ul class="nav nav-pills flex-column mb-auto">
 
         <AuthorizeView>
             <Authorized Context="auth">
                 @{
-                    var user = auth.User;
-                    bool isAdmin = user.IsInRole("Admin");
+                    bool isAdmin = auth.User.IsInRole("Admin");
                 }
+
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="" Match="NavLinkMatch.All">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-home"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 fw-normal">Inicio</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="/" Match="NavLinkMatch.All">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-home"></i></div>
+                        Inicio
                     </NavLink>
                 </li>
 
-                <li class="nav-item mt-4 mb-2">
-                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Procesos</h6>
+                <li class="nav-item mt-3 mb-1">
+                    <small class="text-uppercase opacity-75 ps-3">Procesos</small>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="enterramiento">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-cross"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Enterramiento</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="construccion">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-tools"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 text-wrap lh-sm">Derecho Construcción</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="enterramiento">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-cross"></i></div>
+                        Derecho Enterramiento
                     </NavLink>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="registrodocumentacion">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 text-wrap lh-sm">Registro Documentación</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="construccion">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-tools"></i></div>
+                        Derecho Construcción
                     </NavLink>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="certificacion">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-file-signature"></i>
-                        </div>
-                        <span class="nav-link-text ms-2">Certificaciones</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="registrodocumentacion">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-file-alt"></i></div>
+                        Registro Documentación
                     </NavLink>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="arrendamiento">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-vector-square"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 text-wrap lh-sm">Arrendamiento Terreno</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="certificacion">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-file-signature"></i></div>
+                        Certificaciones
                     </NavLink>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="consultaingreso">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <span class="nav-link-text ms-2 text-wrap lh-sm">Consulta Ingresos</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="arrendamiento">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-vector-square"></i></div>
+                        Arrendamiento Terreno
                     </NavLink>
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="historial">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-history"></i>
-                        </div>
-                        <span class="nav-link-text ms-2">Historial</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="consultaingreso">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-chart-line"></i></div>
+                        Consulta Ingresos
+                    </NavLink>
+                </li>
+
+                <li class="nav-item mb-2">
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="historial">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-history"></i></div>
+                        Historial
                     </NavLink>
                 </li>
 
                 @if (isAdmin)
                 {
-                    <li class="nav-item mt-4 mb-2">
-                        <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Administración</h6>
+                    <li class="nav-item mt-3 mb-1">
+                        <small class="text-uppercase opacity-75 ps-3">Administración</small>
                     </li>
+
                     <li class="nav-item mb-2">
-                        <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="admin">
-                            <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-user-shield"></i>
-                            </div>
-                            <span class="nav-link-text ms-2">Panel Admin</span>
+                        <NavLink class="nav-link text-white d-flex align-items-center" href="admin">
+                            <div class="icon-box icon-glass me-2"><i class="fas fa-user-shield"></i></div>
+                            Panel Admin
                         </NavLink>
                     </li>
                 }
 
-                <li class="nav-item mt-4 mb-2">
-                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Cuenta</h6>
+                <li class="nav-item mt-3 mb-1">
+                    <small class="text-uppercase opacity-75 ps-3">Cuenta</small>
+                </li>
+
+                <li class="nav-item mb-2 ps-3">
+                    <i class="fas fa-user-circle me-2"></i>@auth.User.Identity?.Name
                 </li>
 
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="Account/Manage">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                        <span class="nav-link-text ms-2">@auth.User.Identity?.Name</span>
-                    </NavLink>
-                </li>
-
-                <li class="nav-item mb-2">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="Account/Login" />
-                        <button type="submit" class="nav-link text-white d-flex align-items-center w-100 border-0 bg-transparent text-start py-2 px-3">
-                            <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </div>
-                            <span class="nav-link-text ms-2">Cerrar Sesión</span>
-                        </button>
-                    </form>
+                    <a class="nav-link text-white" href="/logout">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Cerrar Sesión
+                    </a>
                 </li>
             </Authorized>
 
             <NotAuthorized>
-                <li class="nav-item mt-4 mb-2">
-                    <h6 class="ps-4 ms-2 text-uppercase text-white opacity-75 fw-bold" style="font-size: 0.75rem;">Acceso</h6>
+                <li class="nav-item mt-3 mb-2">
+                    <small class="text-uppercase opacity-75 ps-3">Acceso</small>
                 </li>
+
                 <li class="nav-item mb-2">
-                    <NavLink class="nav-link text-white d-flex align-items-center py-2 px-3" href="Account/Login">
-                        <div class="icon-box icon-glass text-center border-radius-md me-2 d-flex align-items-center justify-content-center">
-                            <i class="fas fa-key"></i>
-                        </div>
-                        <span class="nav-link-text ms-2">Iniciar Sesión</span>
+                    <NavLink class="nav-link text-white d-flex align-items-center" href="Account/Login">
+                        <div class="icon-box icon-glass me-2"><i class="fas fa-key"></i></div>
+                        Inicio Sesión
                     </NavLink>
                 </li>
             </NotAuthorized>
@@ -181,22 +151,13 @@
 </div>
 
 @code {
-    private string? currentUrl;
-
     protected override void OnInitialized()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
+        Nav.LocationChanged += (_, _) => StateHasChanged();
     }
 
     public void Dispose()
     {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        Nav.LocationChanged -= (_, _) => StateHasChanged();
     }
 }

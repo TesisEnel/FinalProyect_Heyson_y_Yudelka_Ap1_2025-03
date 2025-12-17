@@ -19,9 +19,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var ConStr = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbPath = Path.Combine(
+    Directory.GetCurrentDirectory(),
+    "Data",
+    "FinalProyect.db"
+);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(ConStr));
+    options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
@@ -35,10 +40,11 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-        options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
-    })
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+})
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -76,11 +82,25 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+using (var scope = app.Services.CreateScope())
+{
+    await IdentitySeed.SeedAsync(scope.ServiceProvider);
+}
+
+app.MapGet("/logout", async (SignInManager<ApplicationUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/Account/Login");
+});
 
 app.Run();

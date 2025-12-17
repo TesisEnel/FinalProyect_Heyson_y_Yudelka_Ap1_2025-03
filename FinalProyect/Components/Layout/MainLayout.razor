@@ -1,18 +1,28 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="page-wrapper"> 
-    <aside class="sidebar-wrapper"> 
-        <NavMenu /> 
-    </aside> 
+<div class="page-wrapper">
+
+    <AuthorizeView>
+        <Authorized>
+            <aside class="sidebar-wrapper">
+                <NavMenu />
+            </aside>
+        </Authorized>
+    </AuthorizeView>
     <main class="main-content d-flex flex-column">
-        <Topbar />
-    <div class="container-fluid py-4 flex-grow-1"> 
-        @Body
-    </div>
+        <AuthorizeView>
+            <Authorized>
+                <Topbar />
+            </Authorized>
+        </AuthorizeView>
 
-    <Footer/>
+        <div class="container-fluid py-4 flex-grow-1">
+            @Body
+        </div>
 
+        <Footer />
     </main>
 </div>
 
@@ -25,23 +35,15 @@
 
         <script>
             globalThis.historialExport = {
-
                 exportPDF: function () {
                     const { jsPDF } = globalThis.jspdf;
                     const doc = new jsPDF();
-
                     doc.text("Historial de Ingresos", 14, 10);
 
                     const table = document.querySelector("table");
                     if (table) {
-                        doc.autoTable({
-                            html: table,
-                            theme: 'grid',
-                            startY: 20,
-                        });
+                        doc.autoTable({ html: table, startY: 20 });
                         doc.save("Historial_Ingresos.pdf");
-                    } else {
-                        alert("No table found to export!");
                     }
                 },
 
@@ -50,8 +52,6 @@
                     if (table) {
                         const wb = XLSX.utils.table_to_book(table);
                         XLSX.writeFile(wb, "Historial_Ingresos.xlsx");
-                    } else {
-                        alert("No table found to export!");
                     }
                 }
             };
